@@ -1,0 +1,183 @@
+[General]
+# 通用设置
+# > 日志等级
+loglevel = notify
+# > 跳过代理
+skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, 17.0.0.0/8, localhost, *.local, *.crashlytics.com
+# > VIF Excluded Routes
+# tun-excluded-routes = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12 , 239.255.255.250/32
+# > VIF Included Routes
+# tun-included-routes = 192.168.1.12/32
+# > Always Real IP Hosts
+always-real-ip = *.srv.nintendo.net, *.stun.playstation.net, xbox.*.microsoft.com, *.xboxlive.com
+# Hijack DNS
+# hijack-dns = 8.8.8.8:53, 8.8.4.4:53
+# > 允许 Wi-Fi 访问macOS
+http-listen = 0.0.0.0:8888
+socks5-listen = 0.0.0.0:8889
+# > 允许 Wi-Fi 访问iOS
+allow-wifi-access = false
+wifi-access-http-port = 6152
+wifi-access-socks5-port = 6153
+# > Internet 测试 URL
+internet-test-url = http://www.aliyun.com
+# > 代理测速 URL
+proxy-test-url = http://www.gstatic.com/generate_204
+# > 测试超时（秒）
+test-timeout = 5
+# > 排除简单主机名
+exclude-simple-hostnames = true
+# > IPv6 支持
+ipv6 = false
+# > 当遇到 REJECT 策略时返回错误页
+show-error-page-for-reject = true
+# > Wi-Fi 不是主接口则使用SSID组的默认策略
+use-default-policy-if-wifi-not-primary = false
+# > 增强版 Wi-Fi 助理
+wifi-assist = false
+# > DNS 服务器
+dns-server = 1.2.4.8, 223.5.5.5, 223.6.6.6, 119.29.29.29, 80.80.80.80, system
+encrypted-dns-server = https://dns.alidns.com/dns-query
+read-etc-hosts = true
+# > etc/hosts 读取 DNS 记录
+include-all-networks = false
+# > 路由防火墙
+# 包含所有的网络请求
+include-local-networks = false
+# 包含本地网络请求
+disable-geoip-db-auto-update = false
+# > 自定义 GeoIP 数据库
+udp-policy-not-supported-behaviour = REJECT
+# > GeoIP 禁用自动更新
+http-api-tls = false
+# > UDP IP 防泄漏
+http-api-web-dashboard = true
+# > HTTP-API-TLS
+hide-vpn-icon = false
+# > Web 控制器
+allow-hotspot-access = false
+# > 隐藏 VPN 图标
+ipv6-vif = auto
+# > All Hybrid 网络并发
+# all-hybrid = false
+# > 兼容模式
+# compatibility-mode = false
+# > 允许个人热点使用代理
+http-api = 811325@0.0.0.0:6171
+external-controller-access = 811325@127.0.0.1:6170
+
+[Replica]
+hide-apple-request = 0
+hide-crash-reporter-request = 0
+hide-udp = 0
+
+[Proxy]
+直连 = direct
+☁️Zero Trust = wireguard, section-name=Cloudflare, test-url=http://cp.cloudflare.com/generate_204
+🇯🇵东京(trojan) = trojan, 131.186.56.160, 37871, password=UBCueIdn7P, skip-cert-verify=true
+🇯🇵Tokyo = trojan, tokyo.sijuly.ml, 443, password=EmCp1M3TeYCIHbuG, skip-cert-verify=true
+🇸🇬新加坡-ARM1 = trojan, arm1.sijuly.ga, 443, password=0261f85e-361f-b14a-4946-015f598668d2
+🇸🇬新加坡-ARM2 = trojan, arm2.sijuly.ga, 443, password=VXH4JPayTQDqQqwp
+🇸🇬新加坡-ARM3 = trojan, arm3.sijuly.ga, 443, password=7VFwvam2kUJ2FuoV
+🇨🇳 台北（GCP) = trojan, 130.211.252.93, 56600, password=q4DV6f3cpD, skip-cert-verify=true, tfo=true
+
+[Proxy Group]
+节点选择 = select, ☁️Zero Trust, 🇯🇵Tokyo, 🇯🇵东京(trojan), 🇸🇬新加坡-ARM1, 🇸🇬新加坡-ARM2, 🇸🇬新加坡-ARM3, no-alert=0, hidden=0, include-all-proxies=0, include-other-group="甲骨文, 谷歌云"
+全球加速 = select, 节点选择, 台湾, 香港, 新加坡, 日本, 美国, no-alert=1, hidden=0, include-all-proxies=0
+Telegram = select, ☁️Zero Trust, 🇯🇵Tokyo, 🇯🇵东京(trojan), 🇸🇬新加坡-ARM1, 🇸🇬新加坡-ARM2, 🇸🇬新加坡-ARM3, no-alert=0, hidden=0, include-all-proxies=0
+YouTube = select, 美国, ☁️Zero Trust, 🇯🇵东京(trojan), 🇸🇬新加坡-ARM1, 🇸🇬新加坡-ARM2, 🇸🇬新加坡-ARM3, no-alert=0, hidden=0, include-all-proxies=0, policy-path=https://sub.store/download/%E7%BE%8E%E5%9B%BD, update-interval=0
+Spotify = fallback, no-alert=0, hidden=0, include-all-proxies=0, include-other-group=香港, policy-regex-filter=(Hong)|(香港)
+国际流媒体 = select, 全球加速, 节点选择, 谷歌云, 甲骨文, no-alert=0, hidden=0, include-all-proxies=0
+苹果服务 = select, DIRECT, 节点选择, no-alert=0, hidden=0, include-all-proxies=0
+Final = select, 直连, REJECT, ☁️Zero Trust, 全球加速, no-alert=0, hidden=0, include-all-proxies=0
+甲骨文 = url-test, 🇯🇵东京(trojan), 🇯🇵Tokyo, 🇸🇬新加坡-ARM1, 🇸🇬新加坡-ARM2, 🇸🇬新加坡-ARM3, policy-path=https://sub.store/download/collection/%E7%94%B2%E9%AA%A8%E6%96%87, update-interval=3600, no-alert=0, hidden=0, include-all-proxies=0
+谷歌云 = url-test, policy-path=https://sub.store/download/collection/%E8%B0%B7%E6%AD%8C%E4%BA%91, update-interval=3600, no-alert=0, hidden=0, include-all-proxies=0
+香港 = url-test, policy-path=https://feiniaoyun.xyz/api/v1/client/subscribe?token=ffe2937083ab6ef31a005bb56064b15b, policy-regex-filter=(?=.*(港|HK|(?i)Hongkong))^((?!(台|日|韩|新|美|完整解锁奈飞)).)*$, update-interval=3600, no-alert=0, hidden=1, include-all-proxies=0, include-other-group=谷歌云
+台湾 = url-test, policy-path=https://feiniaoyun.xyz/api/v1/client/subscribe?token=ffe2937083ab6ef31a005bb56064b15b, update-interval=3600, policy-regex-filter=(台湾)|(台北), no-alert=0, hidden=1, include-all-proxies=0, include-other-group=谷歌云
+新加坡 = url-test, policy-path=https://feiniaoyun.xyz/api/v1/client/subscribe?token=ffe2937083ab6ef31a005bb56064b15b, policy-regex-filter=新加坡, update-interval=3600, no-alert=0, hidden=1, include-all-proxies=0, include-other-group="谷歌云, 甲骨文", persistent=0
+美国 = url-test, policy-path=https://feiniaoyun.xyz/api/v1/client/subscribe?token=ffe2937083ab6ef31a005bb56064b15b, policy-regex-filter=(美国)|(圣何塞), update-interval=3600, no-alert=0, hidden=1, include-all-proxies=0, include-other-group="谷歌云, 甲骨文"
+日本 = url-test, policy-path=https://feiniaoyun.xyz/api/v1/client/subscribe?token=ffe2937083ab6ef31a005bb56064b15b, update-interval=3600, policy-regex-filter=(日本)|(东京)|(japan), no-alert=0, hidden=1, include-all-proxies=0, include-other-group="谷歌云, 甲骨文"
+
+[Rule]
+DOMAIN,porn.misakaf.org,直连 // Added for: porn.misakaf.org:443
+# > Sub-store
+DOMAIN-SUFFIX,sub-store.vercel.app,全球加速 // Added for: sub-store.vercel.app:443
+# > Spotify
+DOMAIN-SUFFIX,spotify.com,Spotify
+# > Wechat
+RULE-SET,https://raw.githubusercontent.com/NobyDa/Script/master/Surge/WeChat.list,直连
+# > Safari 防跳转
+DOMAIN,app-site-association.cdn-apple.com,REJECT
+# > 屏蔽YouTube的UDP
+AND,((PROTOCOL,UDP), (DOMAIN-SUFFIX,googlevideo.com)),REJECT-NO-DROP
+# 阻止电报频繁请求
+AND,((PROCESS-NAME,Telegram), (OR,((IP-CIDR,0.0.0.0/8), (IP-CIDR,224.0.0.0/4)))),REJECT
+DOMAIN-KEYWORD,buy.itunes.apple.com,直连
+# 规则修正
+RULE-SET,https://raw.githubusercontent.com/DivineEngine/Profiles/master/Surge/Ruleset/Unbreak.list,直连
+# 隐私保护
+RULE-SET,https://raw.githubusercontent.com/DivineEngine/Profiles/master/Surge/Ruleset/Guard/Privacy.list,REJECT-TINYGIF
+# 运营商劫持
+RULE-SET,https://raw.githubusercontent.com/DivineEngine/Profiles/master/Surge/Ruleset/Guard/Hijacking.list,REJECT-TINYGIF
+# Telegram
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/release/rule/Surge/Telegram/Telegram.list,Telegram
+# > Youtube
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list,YouTube
+# Streaming 国际流媒体
+RULE-SET,https://raw.githubusercontent.com/DivineEngine/Profiles/master/Surge/Ruleset/StreamingMedia/Streaming.list,国际流媒体
+# 全球加速
+RULE-SET,https://raw.githubusercontent.com/DivineEngine/Profiles/master/Surge/Ruleset/Global.list,全球加速
+# 苹果服务
+RULE-SET,https://raw.githubusercontent.com/DivineEngine/Profiles/master/Surge/Ruleset/Extra/Apple/Apple.list,直连
+# 剩余未匹配的国内网站
+DOMAIN-SUFFIX,cn,直连
+DOMAIN-KEYWORD,-cn,直连
+# 局域网指定分流
+RULE-SET,LAN,直连
+# 国内直连
+RULE-SET,https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/ruleset/ASN.China.list,直连
+# Surge 的自动 REJECT 保护丢包，防止应用循环请求
+IP-CIDR,0.0.0.0/32,REJECT,no-resolve
+# GeoIP China
+GEOIP,CN,直连
+# DEST-PORT 端口规则 //邮件
+OR,((DEST-PORT,25), (DEST-PORT,110), (DEST-PORT,143)),直连
+AND,((OR,((DOMAIN,time-ios.apple.com), (DOMAIN,time.apple.com), (DOMAIN-SUFFIX,pool.ntp.org))), (DEST-PORT,123)),直连
+FINAL,Final,dns-failed
+
+[Host]
+# > Firebase Cloud Messaging
+mtalk.google.com = 108.177.125.188
+# > Google Dl
+dl.google.com = server:119.29.29.29
+dl.l.google.com = server:119.29.29.29
+update.googleapis.com = server:119.29.29.29
+# > PlayStation
+*.dl.playstation.net = server:119.29.29.29
+# Apple TestFlight
+*testflight.apple.com = server:8.8.4.4
+
+[URL Rewrite]
+# Redirect Google Search Service
+^https?:\/\/(www.)?(g|google)\.cn https://www.google.com 302
+# Redirect Google Maps Service
+^https?:\/\/(ditu|maps).google\.cn https://maps.google.com 302
+
+[SSID Setting]
+SSID:Bp1-5 dns-server=223.5.5.5
+
+[MITM]
+tcp-connection = true
+h2 = true
+hostname = testflight.apple.com, api-fc.dutils.com:443, -*pstatp.com, www.google.cn, *.google-analytics.com, *.pstatp.com
+ca-passphrase = E49F7ECA
+ca-p12 = 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
+
+[WireGuard Cloudflare]
+private-key = 6MxY+lTHvM09bQxpPUaNIST7RH9NDzkcUHHsgoHpvEM=
+self-ip = 172.16.0.2
+self-ip-v6 = 2606:4700:110:8892:4250:1158:4b58:91d6
+prefer-ipv6 = true
+dns-server = 1.1.1.1
+mtu = 1280
+peer = (public-key = bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=, allowed-ips = "0.0.0.0/0, ::0/0", endpoint = 162.159.193.3:2408, keepalive = 45)
