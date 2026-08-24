@@ -1,0 +1,34 @@
+#!name=Panel
+#!desc=自用Panel收集
+
+[Panel]
+
+
+# 刷新DNS
+flushDNS = script-name=flushDNS,update-interval=600
+
+# Netflix解锁检测
+nf_check = script-name=nf_check, title="Netflix 解锁检测", content="请刷新", update-interval=1
+
+# 查看节点IP信息
+IP-Check = script-name=IP-Check, title="节点详情", content="请刷新", style=info, update-interval=1
+
+# 查询网络接口的网速和流量
+网络接口信息面板 = script-name=网络接口信息面板,update-interval={{{UPDATE-INTERVAL}}}
+
+
+[Script]
+
+
+# 刷新DNS
+flushDNS = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/zZPiglet/Task/master/asset/flushDNS.js,argument=title=DNS FLush&icon=arrow.clockwise&color=#3d3d5b&server=false
+
+# Netflix解锁检测
+nf_check = type=generic,script-path=https://gist.githubusercontent.com/Hyseen/b06e911a41036ebc36acf04ddebe7b9a/raw/nf_check.js?version=1632728073, timeout=30
+
+# 查看节点IP信息
+IP-Check = type=generic,timeout=3,script-path=https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/IP-Check/Moore/IP-Check.js
+
+# 查询网络接口的网速和流量
+网络接口信息面板 = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/interface-info/interface-info.js,argument="icon=wifi.router&icon-color=#6699FF&STYLE=ncompact"
+
