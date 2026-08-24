@@ -90,3 +90,4 @@ hostname = %APPEND% net-lsp-x.com
 [Panel]
 {{{PANEL_NAME}}} = script-name=网络信息面板,update-interval={{{UPDATE-INTERVAL}}}
 
+
