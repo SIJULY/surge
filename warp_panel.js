@@ -15,10 +15,13 @@ $httpClient.get({
         } catch(e) {}
     }
     
-    $done({
-        title: "☁️ WARP 优选节点",
-        content: `域名：warp.sijuly.uk\n落地 IP：${currentIp}\n(点击右上角 ↻ 即可手动刷新)`,
-        icon: "cloud.sun.fill",
-        "icon-color": "#FF9500"
+    // 调用 Surge 内部 API，强制清空 Surge 的全局 DNS 缓存
+    $httpAPI("POST", "/v1/dns/flush", {}, function(apiResult) {
+        $done({
+            title: "☁️ WARP 优选节点",
+            content: `域名：warp.sijuly.uk\n落地 IP：${currentIp}\n(已强制刷新 Surge 底层 DNS)`,
+            icon: "cloud.sun.fill",
+            "icon-color": "#FF9500"
+        });
     });
 });
