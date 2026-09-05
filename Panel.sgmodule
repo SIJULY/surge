@@ -9,6 +9,9 @@ IP-Check = script-name=IP-Check, title="节点详情", content="请刷新", styl
 # 查询网络接口的网速和流量
 网络接口信息面板 = script-name=网络接口信息面板,update-interval={{{UPDATE-INTERVAL}}}
 
+# WARP 优选状态面板
+WARP优选状态 = script-name=WARP_Panel, update-interval=3600
+
 
 [Script]
 
@@ -18,3 +21,5 @@ IP-Check = type=generic,timeout=3,script-path=https://raw.githubusercontent.com/
 # 查询网络接口的网速和流量
 网络接口信息面板 = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/interface-info/interface-info.js,argument="icon=wifi.router&icon-color=#6699FF&STYLE=ncompact"
 
+# WARP 优选状态面板脚本
+WARP_Panel = type=generic,timeout=5,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/warp_panel.js
