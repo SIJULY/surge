@@ -1,25 +1,38 @@
-#!name=Panel
-#!desc=自用Panel收集
+#!name=Panel (整合版)
+#!desc=自用面板：网络信息 (Net-Lsp-X) + 节点详情 (IP-Check) + IP 纯净度 (IP-Quality) + WARP 优选状态
+#!arguments=DOMESTIC_IPv4:spcn,DOMESTIC_IPv4_KEY:none,DOMESTIC_IPv6:ddnspod,LANDING_IPv4:ipsb,LANDING_IPv6:ipsb,DNS:ali,FLAG:1,ASN:0,ORG:0,PRIVACY:0,LAN:0,SSID:0,IPv6:0,MASK:0,TIMEOUT:5,RETRIES:1,RETRY_DELAY:1,ENTRANCE_DELAY:0,EVENT_SCRIPT_NAME:网络信息变化,EVENT_DELAY:3,PANEL_NAME:网络信息面板,UPDATE-INTERVAL:-1,ICON:globe.asia.australia,ICON-COLOR:#6699FF
+#!arguments-desc=DOMESTIC_IPv4_KEY: 若接口需要就填(多个 key 用 , 分隔)，其它参数 1 为开启, 0 为关闭
 
 [Panel]
+# 1. 网络信息面板 (Net-Lsp-X：显示入口/落地及策略)
+{{{PANEL_NAME}}} = script-name=网络信息面板,update-interval={{{UPDATE-INTERVAL}}}
 
-# 查看节点IP信息
+# 2. 节点IP检测
 IP-Check = script-name=IP-Check, title="节点详情", content="请刷新", style=info, update-interval=1
 
-# 查询网络接口的网速和流量
-网络接口信息面板 = script-name=网络接口信息面板,update-interval={{{UPDATE-INTERVAL}}}
+# 3. IP 纯净度检测
+IP-Quality = script-name=IP-Quality,title="IP 纯净度",content="点击刷新",style=info,update-interval=0
 
-# WARP 优选状态面板
+# 4. WARP 优选状态面板
 WARP优选状态 = script-name=WARP_Panel, update-interval=3600
 
+[MITM]
+hostname = %APPEND% net-lsp-x.com
 
 [Script]
+# --- 1. 网络信息面板 (Net-Lsp-X) 脚本配置 ---
+# Request
+网络信息请求 = type=http-request,pattern=^https?:\/\/net-lsp-x\.com,script-path=https://raw.githubusercontent.com/Winston-sc/xpanel/main/net-lsp-x.js,timeout=120
+# Event
+{{{EVENT_SCRIPT_NAME}}} = type=event,event-name=network-changed,timeout=120,script-path=https://raw.githubusercontent.com/Winston-sc/xpanel/main/net-lsp-x.js,argument="TYPE=EVENT&icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&LAN={{{LAN}}}&SSID={{{SSID}}}&IPv6={{{IPv6}}}&MASK={{{MASK}}}&DOMESTIC_IPv4={{{DOMESTIC_IPv4}}}&DOMESTIC_IPv6={{{DOMESTIC_IPv6}}}&LANDING_IPv4={{{LANDING_IPv4}}}&LANDING_IPv6={{{LANDING_IPv6}}}&PRIVACY={{{PRIVACY}}}&FLAG={{{FLAG}}}&ENTRANCE_DELAY={{{ENTRANCE_DELAY}}}&TIMEOUT={{{TIMEOUT}}}&EVENT_DELAY={{{EVENT_DELAY}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&ASN={{{ASN}}}&ORG={{{ORG}}}&DOMESTIC_IPv4_KEY={{{DOMESTIC_IPv4_KEY}}}"
+# Panel
+网络信息面板 = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/Winston-sc/xpanel/main/net-lsp-x.js,argument="icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&LAN={{{LAN}}}&SSID={{{SSID}}}&IPv6={{{IPv6}}}&MASK={{{MASK}}}&DOMESTIC_IPv4={{{DOMESTIC_IPv4}}}&DOMESTIC_IPv6={{{DOMESTIC_IPv6}}}&LANDING_IPv4={{{LANDING_IPv4}}}&LANDING_IPv6={{{LANDING_IPv6}}}&PRIVACY={{{PRIVACY}}}&FLAG={{{FLAG}}}&ENTRANCE_DELAY={{{ENTRANCE_DELAY}}}&TIMEOUT={{{TIMEOUT}}}&EVENT_DELAY={{{EVENT_DELAY}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&ASN={{{ASN}}}&ORG={{{ORG}}}&DOMESTIC_IPv4_KEY={{{DOMESTIC_IPv4_KEY}}}"
 
-# 查看节点IP信息
+# --- 2. 节点IP检测 (IP-Check) 脚本配置 ---
 IP-Check = type=generic,timeout=3,script-path=https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Module/Panel/IP-Check/Moore/IP-Check.js
 
-# 查询网络接口的网速和流量
-网络接口信息面板 = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/interface-info/interface-info.js,argument="icon=wifi.router&icon-color=#6699FF&STYLE=ncompact"
+# --- 3. IP 纯净度检测 (IP-Quality) 脚本配置 ---
+IP-Quality = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/ybb963416867/surge_pannel/refs/heads/main/main/pannel/IP-Quality.js
 
-# WARP 优选状态面板脚本
+# --- 4. WARP 优选状态脚本配置 ---
 WARP_Panel = type=generic,timeout=5,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/warp_panel.js
