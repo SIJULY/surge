@@ -1,0 +1,9 @@
+#!name=WARP 优选状态面板
+#!desc=在 Surge 首页显示 WARP 优选节点的当前解析 IP，点击右上角图标可随时手动拉取最新 IP。
+#!system=ios
+
+[Panel]
+WARP优选状态 = script-name=WARP_Panel, update-interval=3600
+
+[Script]
+WARP_Panel = type=generic, timeout=5, script-path=https://raw.githubusercontent.com/SIJULY/surge/main/warp_panel.js
