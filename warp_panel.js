@@ -15,13 +15,27 @@ $httpClient.get({
         } catch(e) {}
     }
     
-    // 调用 Surge 内部 API，强制清空 Surge 的全局 DNS 缓存
-    $httpAPI("POST", "/v1/dns/flush", {}, function(apiResult) {
+    let isDone = false;
+    const finish = (statusMsg) => {
+        if (isDone) return;
+        isDone = true;
         $done({
             title: "☁️ WARP 优选节点",
-            content: `域名：warp.sijuly.uk\n落地 IP：${currentIp}\n(已强制刷新 Surge 底层 DNS)`,
+            content: `域名：warp.sijuly.uk\n落地 IP：${currentIp}\n${statusMsg}`,
             icon: "cloud.sun.fill",
             "icon-color": "#FF9500"
         });
-    });
+    };
+
+    try {
+        // 调用 Surge 内部 API 清理 DNS
+        $httpAPI("POST", "/v1/dns/flush", {}, function(apiResult) {
+            finish("(已强制刷新 Surge 底层 DNS)");
+        });
+        
+        // 设定 1.5 秒超时，如果 API 没反应，直接输出结果，防止面板卡死
+        setTimeout(() => { finish("(获取成功，但 DNS 刷新超时)"); }, 1500);
+    } catch (err) {
+        finish("(请在 General 中开启 http-api)");
+    }
 });
