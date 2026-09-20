@@ -30,3 +30,14 @@ IP-Quality = type=generic,timeout=10,script-path=https://raw.githubusercontent.c
 
 # --- 3. WARP 优选状态脚本配置 ---
 WARP_Panel = type=generic,timeout=5,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/warp_panel.js
+
+[Rule]
+# 使用标准的 PROXY 占位符触发 Egern 的策略映射
+DOMAIN-SUFFIX,net-lsp-x.com,PROXY
+DOMAIN-SUFFIX,ip-api.com,PROXY
+DOMAIN-SUFFIX,ip.sb,PROXY
+DOMAIN-SUFFIX,ipinfo.io,PROXY
+DOMAIN-SUFFIX,ipapi.co,PROXY
+DOMAIN-SUFFIX,ident.me,PROXY
+DOMAIN-SUFFIX,ipify.org,PROXY
+DOMAIN-SUFFIX,ipwhois.app,PROXY
