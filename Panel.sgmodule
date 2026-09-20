@@ -19,14 +19,14 @@ hostname = %APPEND% net-lsp-x.com
 [Script]
 # --- 1. 网络信息面板 (Net-Lsp-X) 脚本配置 ---
 # Request
-网络信息请求 = type=http-request,pattern=^https?:\/\/net-lsp-x\.com,script-path=https://raw.githubusercontent.com/Winston-sc/xpanel/main/net-lsp-x.js,timeout=120
+网络信息请求 = type=http-request,pattern=^https?:\/\/net-lsp-x\.com,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/net-lsp-x.js,timeout=120
 # Event
-{{{EVENT_SCRIPT_NAME}}} = type=event,event-name=network-changed,timeout=120,script-path=https://raw.githubusercontent.com/Winston-sc/xpanel/main/net-lsp-x.js,argument="TYPE=EVENT&icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&LAN={{{LAN}}}&SSID={{{SSID}}}&IPv6={{{IPv6}}}&MASK={{{MASK}}}&DOMESTIC_IPv4={{{DOMESTIC_IPv4}}}&DOMESTIC_IPv6={{{DOMESTIC_IPv6}}}&LANDING_IPv4={{{LANDING_IPv4}}}&LANDING_IPv6={{{LANDING_IPv6}}}&PRIVACY={{{PRIVACY}}}&FLAG={{{FLAG}}}&ENTRANCE_DELAY={{{ENTRANCE_DELAY}}}&TIMEOUT={{{TIMEOUT}}}&EVENT_DELAY={{{EVENT_DELAY}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&ASN={{{ASN}}}&ORG={{{ORG}}}&DOMESTIC_IPv4_KEY={{{DOMESTIC_IPv4_KEY}}}"
+{{{EVENT_SCRIPT_NAME}}} = type=event,event-name=network-changed,timeout=120,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/net-lsp-x.js,argument="TYPE=EVENT&icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&LAN={{{LAN}}}&SSID={{{SSID}}}&IPv6={{{IPv6}}}&MASK={{{MASK}}}&DOMESTIC_IPv4={{{DOMESTIC_IPv4}}}&DOMESTIC_IPv6={{{DOMESTIC_IPv6}}}&LANDING_IPv4={{{LANDING_IPv4}}}&LANDING_IPv6={{{LANDING_IPv6}}}&PRIVACY={{{PRIVACY}}}&FLAG={{{FLAG}}}&ENTRANCE_DELAY={{{ENTRANCE_DELAY}}}&TIMEOUT={{{TIMEOUT}}}&EVENT_DELAY={{{EVENT_DELAY}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&ASN={{{ASN}}}&ORG={{{ORG}}}&DOMESTIC_IPv4_KEY={{{DOMESTIC_IPv4_KEY}}}"
 # Panel
-网络信息面板 = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/Winston-sc/xpanel/main/net-lsp-x.js,argument="icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&LAN={{{LAN}}}&SSID={{{SSID}}}&IPv6={{{IPv6}}}&MASK={{{MASK}}}&DOMESTIC_IPv4={{{DOMESTIC_IPv4}}}&DOMESTIC_IPv6={{{DOMESTIC_IPv6}}}&LANDING_IPv4={{{LANDING_IPv4}}}&LANDING_IPv6={{{LANDING_IPv6}}}&PRIVACY={{{PRIVACY}}}&FLAG={{{FLAG}}}&ENTRANCE_DELAY={{{ENTRANCE_DELAY}}}&TIMEOUT={{{TIMEOUT}}}&EVENT_DELAY={{{EVENT_DELAY}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&ASN={{{ASN}}}&ORG={{{ORG}}}&DOMESTIC_IPv4_KEY={{{DOMESTIC_IPv4_KEY}}}"
+网络信息面板 = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/net-lsp-x.js,argument="icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&LAN={{{LAN}}}&SSID={{{SSID}}}&IPv6={{{IPv6}}}&MASK={{{MASK}}}&DOMESTIC_IPv4={{{DOMESTIC_IPv4}}}&DOMESTIC_IPv6={{{DOMESTIC_IPv6}}}&LANDING_IPv4={{{LANDING_IPv4}}}&LANDING_IPv6={{{LANDING_IPv6}}}&PRIVACY={{{PRIVACY}}}&FLAG={{{FLAG}}}&ENTRANCE_DELAY={{{ENTRANCE_DELAY}}}&TIMEOUT={{{TIMEOUT}}}&EVENT_DELAY={{{EVENT_DELAY}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&ASN={{{ASN}}}&ORG={{{ORG}}}&DOMESTIC_IPv4_KEY={{{DOMESTIC_IPv4_KEY}}}"
 
 # --- 2. IP 纯净度检测 (IP-Quality) 脚本配置 ---
-IP-Quality = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/ybb963416867/surge_pannel/refs/heads/main/main/pannel/IP-Quality.js
+IP-Quality = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/IP-Quality.js
 
 # --- 3. WARP 优选状态脚本配置 ---
 WARP_Panel = type=generic,timeout=5,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/warp_panel.js
