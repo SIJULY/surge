@@ -12,12 +12,12 @@
 # ==============================================================================
 
 name: YouTube 增强·合并版
-description: 去广告/自动最高画质/后台播放/画中画 + 字幕翻译/UI精简，二合一本地化版本
+description: 去广告/自动最高画质 + 字幕翻译/UI 精简，二合一本地化版本
 compat_arguments:
   blockUpload: 'true'
   blockImmersive: 'true'
   blockShorts: 'false'
-  captionLang: 'zh-Hans'
+  captionLang: 'true'
   debug: 'false'
   autoHd: 'true'
   blockGames: 'true'
@@ -49,11 +49,11 @@ compat_arguments_schema:
     - 'false'
   captionLang:
     name: 字幕翻译为简体中文
-    description: 开启后自动将字幕翻译为简体中文，关闭则不翻译
-    default_value: 'zh-Hans'
+    description: 开启后自动将字幕翻译为简体中文（对应 zh-Hans），关闭则不翻译
+    default_value: 'true'
     options:
-    - 'zh-Hans'
-    - 'off'
+    - 'true'
+    - 'false'
   debug:
     name: 启用调试模式
     description: 输出更多日志用于排查问题
