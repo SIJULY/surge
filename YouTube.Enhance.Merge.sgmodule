@@ -17,7 +17,7 @@ compat_arguments:
   blockUpload: 'true'
   blockImmersive: 'true'
   blockShorts: 'false'
-  captionLang: 'off'
+  captionLang: 'zh-Hans'
   debug: 'false'
   autoHd: 'true'
   blockGames: 'true'
@@ -48,19 +48,12 @@ compat_arguments_schema:
     - 'true'
     - 'false'
   captionLang:
-    name: 字幕翻译语言
-    description: 遵循 Google Translate 语言代码，off 为关闭翻译
-    default_value: 'off'
+    name: 字幕翻译为简体中文
+    description: 开启后自动将字幕翻译为简体中文，关闭则不翻译
+    default_value: 'zh-Hans'
     options:
-    - 'off'
     - 'zh-Hans'
-    - 'zh-Hant'
-    - 'en'
-    - 'ja'
-    - 'ko'
-    - 'es'
-    - 'fr'
-    - 'de'
+    - 'off'
   debug:
     name: 启用调试模式
     description: 输出更多日志用于排查问题
