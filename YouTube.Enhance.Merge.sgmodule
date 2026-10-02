@@ -171,13 +171,15 @@ scriptings:
     max_size: 0
     body_required: true
     binary_body: true
-# --- Maasea 引擎（后执行：字幕翻译/UI 精简/画中画解锁；仅 response 侧）---
+# --- Maasea 引擎（后执行；仅 player 响应：字幕翻译/画中画解锁/UI 精简）---
 # 注意：initplayback 的 Worker 跳转已移除（与 IBL3ND 本地 UMP 处理冲突，
-# 且每次播放都依赖第三方 Worker，是卡顿的主因）；字幕翻译、画中画解锁均为
-# response 侧本地逻辑，不受影响
+# 且每次播放都依赖第三方 Worker）；Maasea 的 response 只保留 player——
+# 字幕翻译(Pi)/画中画解锁(Si)只在 player 响应上有效，
+# browse/next/search 上的广告过滤与 IBL3ND 完全重复，
+# 双重 protobuf 解码/遍历是 Egern 整体变慢的主因
 - http_response:
     name: yt.merge.maasea-response
-    match: ^https:\/\/youtubei\.googleapis\.com\/(youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch|log_event|config))(\?(.*))?$
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(\?(.*))?$
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/maasea.response.js
     env:
       _compat.$argument: '{"captionLang":"{{{captionLang}}}","blockUpload":{{{blockUpload}}},"blockImmersive":{{{blockImmersive}}},"blockShorts":{{{blockShorts}}},"debug":{{{debug}}}}'
