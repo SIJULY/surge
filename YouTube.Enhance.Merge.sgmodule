@@ -1,31 +1,19 @@
-# YouTube 增强·合并版
-# ==============================================================================
-# Maasea "Youtube (Music) Enhance" + IBL3ND/gholts "YouTube 增强" 二合一
-#  - Maasea 引擎（仅 response 侧）：字幕翻译 / 隐藏上传按钮 / 隐藏选段(沉浸式)按钮 /
-#                 隐藏 Shorts / 强制解锁画中画与后台播放（Si 硬编码，无开关）
-#  - IBL3ND 引擎：去广告 / 自动最高画质 / 隐藏小游戏 / 隐藏竖屏直播 /
-#                 Jump Ahead / 隐藏商店购物 / 实验性原生下载 / UMP 本地处理
-# 脚本已本地化至本仓库 Script/Youtube/（2026-10-01 同步上游最新版，逐字节一致）
-# 原作者：Maasea (github.com/Maasea/sgmodule)，
-#         IBL3ND (github.com/IBL3ND/module)，gholts (github.com/gholts/surge)
-# 注意：initplayback 不再经 Maasea Worker 跳转（与 IBL3ND 本地 UMP 冲突且依赖第三方），
-#       由 IBL3ND 本地处理；Maasea 侧只保留 response（字幕/画中画/UI）与 log_event
-# ==============================================================================
-
-name: YouTube 增强·合并版
-description: 去广告/自动最高画质/后台播放/画中画 + 字幕翻译/UI精简，二合一本地化版本
+name: YouTube 增强（IBL3ND + Maasea 合并版）
+description: 去广告/自动最高画质/后台播放/画中画 + 字幕翻译/UI精简。以原版 Egern-YouTube.yaml 为底，脚本本地化至本仓库。
 compat_arguments:
   blockUpload: 'true'
-  blockImmersive: 'true'
-  blockShorts: 'false'
-  captionLang: 'true'
-  debug: 'false'
+  blockShorts: 'true'
   autoHd: 'true'
   blockGames: 'true'
-  blockVerticalLive: 'false'
+  blockVerticalLive: 'true'
   jumpAhead: 'true'
   blockStore: 'true'
-  nativeDownload: 'false'
+  nativeDownload: 'true'
+  captionLang: 'true'
+  blockImmersive: 'true'
+  debug: 'false'
+  blockUpload: 'true'
+  blockShorts: 'false'
 compat_arguments_schema:
   blockUpload:
     name: 隐藏「上传」入口
@@ -34,31 +22,10 @@ compat_arguments_schema:
     options:
     - 'true'
     - 'false'
-  blockImmersive:
-    name: 隐藏「选段」按钮
-    description: 隐藏沉浸式/选段按钮
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
   blockShorts:
     name: 隐藏「Shorts」入口
     description: 隐藏导航栏中的「Shorts」入口
-    default_value: 'false'
-    options:
-    - 'true'
-    - 'false'
-  captionLang:
-    name: 字幕翻译为简体中文
-    description: 开启后自动将字幕翻译为简体中文（对应 zh-Hans），关闭则不翻译
     default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  debug:
-    name: 启用调试模式
-    description: 输出更多日志用于排查问题
-    default_value: 'false'
     options:
     - 'true'
     - 'false'
@@ -79,7 +46,7 @@ compat_arguments_schema:
   blockVerticalLive:
     name: 隐藏竖屏直播推荐
     description: 隐藏各界面中的竖屏直播推荐
-    default_value: 'false'
+    default_value: 'true'
     options:
     - 'true'
     - 'false'
@@ -100,13 +67,49 @@ compat_arguments_schema:
   nativeDownload:
     name: 原生下载（实验性）
     description: 实验性原生下载功能；未设置画质时使用 720p，服务器限制可能仍然生效
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  captionLang:
+    name: 字幕翻译为简体中文
+    description: 开启后自动将字幕翻译为简体中文（对应 zh-Hans），关闭则不翻译
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  blockImmersive:
+    name: 隐藏「选段」按钮
+    description: 隐藏沉浸式/选段按钮
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  debug:
+    name: 启用调试模式
+    description: 输出更多日志用于排查问题
     default_value: 'false'
     options:
     - 'true'
     - 'false'
-author: Maasea & IBL3ND/gholts（合并整理：SIJULY）
-homepage: https://github.com/SIJULY/surge
+  blockUpload:
+    name: 隐藏「上传」入口（Maasea）
+    description: 隐藏导航栏中的「上传」入口
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  blockShorts:
+    name: 隐藏「Shorts」入口（Maasea）
+    description: 隐藏导航栏中的「Shorts」入口
+    default_value: 'false'
+    options:
+    - 'true'
+    - 'false'
+author: gholts & Maasea（合并整理：SIJULY）
+homepage: https://github.com/gholts/surge/tree/main/modules
 icon: https://iili.io/KQ67Yxa.png
+dns: {}
 rewrites:
 - match: ^https:\/\/www\.youtube\.com\/(pagead|pcs)\/
   actions:
@@ -117,35 +120,12 @@ rewrites:
   - respond:
       status: 404
 scriptings:
-# --- IBL3ND 引擎（先执行：去广告/画质等结构层修改）---
-# 注意：http_request 条目与原版 Egern-YouTube.yaml 逐字对齐（不加 body_required 等），
-# 避免与原版行为分叉；initplayback 的 UMP 由 IBL3ND 本地处理，不再经 Maasea Worker 跳转
 - http_request:
-    name: yt.merge.ad-break
+    name: youtube.enhance.ad-break
     match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player\/ad_break(?:\?.*)?$
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
-- http_request:
-    name: yt.merge.dl-player
-    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(?:\?.*)?$
-    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
-    env:
-      _compat.$argument: '{"nativeDownload":{{{nativeDownload}}}}'
-- http_request:
-    name: yt.merge.init
-    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?$
-    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
-- http_request:
-    name: yt.merge.auto-hd
-    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/videoplayback
-    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
-    env:
-      _compat.$argument: '{"autoHd":{{{autoHd}}}}'
-- http_request:
-    name: yt.merge.log-event
-    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event
-    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
 - http_response:
-    name: yt.merge.download
+    name: youtube.enhance.download
     match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/offline\/get_download_action(?:\?.*)?$
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.response.js
     env:
@@ -153,8 +133,17 @@ scriptings:
     max_size: 0
     body_required: true
     binary_body: true
+- http_request:
+    name: youtube.enhance.download-player
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+    env:
+      _compat.$argument: '{"nativeDownload":{{{nativeDownload}}}}'
+    max_size: 0
+    body_required: true
+    binary_body: true
 - http_response:
-    name: yt.merge.response
+    name: youtube.enhance.response
     match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(?:navigation\/resolve_url|browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch|log_event|config)(?:\?.*)?$
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.response.js
     env:
@@ -163,7 +152,7 @@ scriptings:
     body_required: true
     binary_body: true
 - http_response:
-    name: yt.merge.ump
+    name: youtube.enhance.ump
     match: ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?$
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.response.js
     env:
@@ -171,15 +160,32 @@ scriptings:
     max_size: 0
     body_required: true
     binary_body: true
-# --- Maasea 引擎（后执行；仅 player 响应：字幕翻译/画中画解锁/UI 精简）---
-# 注意：initplayback 的 Worker 跳转已移除（与 IBL3ND 本地 UMP 处理冲突，
-# 且每次播放都依赖第三方 Worker）；Maasea 的 response 只保留 player——
-# 字幕翻译(Pi)/画中画解锁(Si)只在 player 响应上有效，
-# browse/next/search 上的广告过滤与 IBL3ND 完全重复，
-# 双重 protobuf 解码/遍历是 Egern 整体变慢的主因
+- http_request:
+    name: youtube.enhance.init
+    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+    max_size: 0
+    body_required: true
+    binary_body: true
+- http_request:
+    name: youtube.enhance.auto-hd
+    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/videoplayback
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+    env:
+      _compat.$argument: '{"autoHd":{{{autoHd}}}}'
+    max_size: 0
+    body_required: true
+    binary_body: true
+- http_request:
+    name: youtube.enhance.log-event
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+    max_size: 0
+    body_required: true
+    binary_body: true
 - http_response:
-    name: yt.merge.maasea-response
-    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(\?(.*))?$
+    name: youtube.enhance.maasea-response
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(\?.*)?$
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/maasea.response.js
     env:
       _compat.$argument: '{"captionLang":"{{{captionLang}}}","blockUpload":{{{blockUpload}}},"blockImmersive":{{{blockImmersive}}},"blockShorts":{{{blockShorts}}},"debug":{{{debug}}}}'
@@ -187,9 +193,11 @@ scriptings:
     body_required: true
     binary_body: true
 - http_request:
-    name: yt.merge.maasea-log-event
+    name: youtube.enhance.maasea-log-event
     match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/maasea.request.js
+    env:
+      _compat.$argument: '{"captionLang":"{{{captionLang}}}","blockUpload":{{{blockUpload}}},"blockImmersive":{{{blockImmersive}}},"blockShorts":{{{blockShorts}}},"debug":{{{debug}}}}'
     max_size: 0
     body_required: true
     binary_body: true
