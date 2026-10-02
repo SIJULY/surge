@@ -1,5 +1,5 @@
-name: YouTube 增强（IBL3ND + Maasea 合并版）
-description: 去广告/自动最高画质/后台播放/画中画 + 字幕翻译/UI精简。以原版 Egern-YouTube.yaml 为底，脚本本地化至本仓库。
+name: YouTube 增强
+description: 去除油管 广告 支持后台播放 画中画
 compat_arguments:
   blockUpload: 'true'
   blockShorts: 'true'
@@ -9,9 +9,6 @@ compat_arguments:
   jumpAhead: 'true'
   blockStore: 'true'
   nativeDownload: 'true'
-  captionLang: 'true'
-  blockImmersive: 'true'
-  debug: 'false'
 compat_arguments_schema:
   blockUpload:
     name: 隐藏「上传」入口
@@ -69,28 +66,7 @@ compat_arguments_schema:
     options:
     - 'true'
     - 'false'
-  captionLang:
-    name: 字幕翻译为简体中文
-    description: 开启后自动将字幕翻译为简体中文（对应 zh-Hans），关闭则不翻译
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  blockImmersive:
-    name: 隐藏「选段」按钮
-    description: 隐藏沉浸式/选段按钮
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  debug:
-    name: 启用调试模式
-    description: 输出更多日志用于排查问题
-    default_value: 'false'
-    options:
-    - 'true'
-    - 'false'
-author: gholts & Maasea（合并整理：SIJULY）
+author: gholts
 homepage: https://github.com/gholts/surge/tree/main/modules
 icon: https://iili.io/KQ67Yxa.png
 dns: {}
@@ -164,24 +140,6 @@ scriptings:
     name: youtube.enhance.log-event
     match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event
     script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
-    max_size: 0
-    body_required: true
-    binary_body: true
-- http_response:
-    name: youtube.enhance.maasea-response
-    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(\?.*)?$
-    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/maasea.response.js
-    env:
-      _compat.$argument: '{"captionLang":"{{{captionLang}}}","blockUpload":{{{blockUpload}}},"blockImmersive":{{{blockImmersive}}},"blockShorts":{{{blockShorts}}},"debug":{{{debug}}}}'
-    max_size: 0
-    body_required: true
-    binary_body: true
-- http_request:
-    name: youtube.enhance.maasea-log-event
-    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event
-    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/maasea.request.js
-    env:
-      _compat.$argument: '{"captionLang":"{{{captionLang}}}","blockUpload":{{{blockUpload}}},"blockImmersive":{{{blockImmersive}}},"blockShorts":{{{blockShorts}}},"debug":{{{debug}}}}'
     max_size: 0
     body_required: true
     binary_body: true
