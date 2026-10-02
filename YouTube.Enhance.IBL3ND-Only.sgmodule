@@ -1,0 +1,136 @@
+# YouTube 增强·IBL3ND 单引擎（诊断版）
+# ==============================================================================
+# 仅 IBL3ND/gholts "YouTube 增强" 单引擎，脚本走本仓库 Script/Youtube/ 本地化版本
+# （2026-10-01 同步上游最新版，逐字节一致）。用于二分定位合并版问题：
+# 若此版正常而合并版异常，则问题在 Maasea 侧；若此版也异常，则问题在模块/YAML
+# 或本仓库脚本托管，与 Maasea 无关。
+# 原作者：IBL3ND (github.com/IBL3ND/module)，gholts (github.com/gholts/surge)
+# ==============================================================================
+
+name: YouTube 增强（IBL3ND 单引擎·诊断版）
+description: 仅 IBL3ND 去广告引擎（本仓库本地化脚本），用于二分定位合并版问题
+compat_arguments:
+  debug: 'false'
+  autoHd: 'true'
+  blockGames: 'true'
+  blockVerticalLive: 'false'
+  jumpAhead: 'true'
+  blockStore: 'true'
+  nativeDownload: 'false'
+compat_arguments_schema:
+  debug:
+    name: 启用调试模式
+    description: 输出更多日志用于排查问题
+    default_value: 'false'
+    options:
+    - 'true'
+    - 'false'
+  autoHd:
+    name: 自动最高画质
+    description: 优先使用最高可用画质，并阻止自动降低画质
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  blockGames:
+    name: 隐藏小游戏推荐
+    description: 隐藏 YouTube Playables（小游戏）推荐
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  blockVerticalLive:
+    name: 隐藏竖屏直播推荐
+    description: 隐藏各界面中的竖屏直播推荐
+    default_value: 'false'
+    options:
+    - 'true'
+    - 'false'
+  jumpAhead:
+    name: 启用 Jump Ahead
+    description: 启用原生「Jump Ahead」跳转按钮，并去除其推广提示
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  blockStore:
+    name: 隐藏商店和购物板块
+    description: 隐藏视频下方和频道主页中的创作者商店、购物板块
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  nativeDownload:
+    name: 原生下载（实验性）
+    description: 实验性原生下载功能；未设置画质时使用 720p，服务器限制可能仍然生效
+    default_value: 'false'
+    options:
+    - 'true'
+    - 'false'
+author: Maasea & IBL3ND/gholts（合并整理：SIJULY）
+homepage: https://github.com/SIJULY/surge
+icon: https://iili.io/KQ67Yxa.png
+rewrites:
+- match: ^https:\/\/www\.youtube\.com\/(pagead|pcs)\/
+  actions:
+  - respond:
+      status: 404
+- match: ^https:\/\/s\.youtube\.com\/api\/stats\/ads
+  actions:
+  - respond:
+      status: 404
+scriptings:
+# --- IBL3ND 引擎（先执行：去广告/画质等结构层修改）---
+# 注意：http_request 条目与原版 Egern-YouTube.yaml 逐字对齐（不加 body_required 等），
+# 避免与原版行为分叉；initplayback 的 UMP 由 IBL3ND 本地处理，不再经 Maasea Worker 跳转
+- http_request:
+    name: yt.merge.ad-break
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player\/ad_break(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+- http_request:
+    name: yt.merge.dl-player
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/player(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+    env:
+      _compat.$argument: '{"nativeDownload":{{{nativeDownload}}}}'
+- http_request:
+    name: yt.merge.init
+    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+- http_request:
+    name: yt.merge.auto-hd
+    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/videoplayback
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+    env:
+      _compat.$argument: '{"autoHd":{{{autoHd}}}}'
+- http_request:
+    name: yt.merge.log-event
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.request.js
+- http_response:
+    name: yt.merge.download
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/offline\/get_download_action(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.response.js
+    env:
+      _compat.$argument: '{"nativeDownload":{{{nativeDownload}}}}'
+    max_size: 0
+    body_required: true
+    binary_body: true
+- http_response:
+    name: yt.merge.response
+    match: ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(?:navigation\/resolve_url|browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch|log_event|config)(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.response.js
+    env:
+      _compat.$argument: '{"blockGames":{{{blockGames}}},"blockVerticalLive":{{{blockVerticalLive}}},"jumpAhead":{{{jumpAhead}}},"autoHd":{{{autoHd}}},"blockStore":{{{blockStore}}}}'
+    max_size: 0
+    body_required: true
+    binary_body: true
+- http_response:
+    name: yt.merge.ump
+    match: ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?$
+    script_url: https://raw.githubusercontent.com/SIJULY/surge/refs/heads/main/Script/Youtube/ibl3nd.response.js
+    env:
+      _compat.$argument: '{"blockGames":{{{blockGames}}},"blockVerticalLive":{{{blockVerticalLive}}},"jumpAhead":{{{jumpAhead}}},"autoHd":{{{autoHd}}},"blockStore":{{{blockStore}}}}'
+    max_size: 0
+    body_required: true
+    binary_body: true
