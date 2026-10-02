@@ -12,8 +12,6 @@ compat_arguments:
   captionLang: 'true'
   blockImmersive: 'true'
   debug: 'false'
-  blockUpload: 'true'
-  blockShorts: 'false'
 compat_arguments_schema:
   blockUpload:
     name: 隐藏「上传」入口
@@ -88,20 +86,6 @@ compat_arguments_schema:
   debug:
     name: 启用调试模式
     description: 输出更多日志用于排查问题
-    default_value: 'false'
-    options:
-    - 'true'
-    - 'false'
-  blockUpload:
-    name: 隐藏「上传」入口（Maasea）
-    description: 隐藏导航栏中的「上传」入口
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  blockShorts:
-    name: 隐藏「Shorts」入口（Maasea）
-    description: 隐藏导航栏中的「Shorts」入口
     default_value: 'false'
     options:
     - 'true'
