@@ -225,7 +225,7 @@ let content = ''
       content = `${content}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
     }
 
-    title = title || '网络信息 𝕏'
+    title = '🌐 ' + (title || '网络信息 𝕏')
     if (isTile()) {
       await notify('网络信息', '面板', '查询完成')
     } else if (!isPanel()) {

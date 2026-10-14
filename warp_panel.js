@@ -21,9 +21,7 @@ $httpClient.get({
         isDone = true;
         $done({
             title: "☁️ WARP 优选节点",
-            content: `域名：warp.sijuly.uk\n落地 IP：${currentIp}\n${statusMsg}`,
-            icon: "cloud.sun.fill",
-            "icon-color": "#FF9500"
+            content: `域名：warp.sijuly.uk\n落地 IP：${currentIp}\n${statusMsg}`
         });
     };
 

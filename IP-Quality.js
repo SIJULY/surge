@@ -5,7 +5,7 @@ const url = "http://ip-api.com/json?fields=status,query,country,countryCode,regi
 
 $httpClient.get(url, function(error, response, data) {
   if (error || !data) {
-    $done({ title: "IP 检测失败", content: error || "无数据", icon: "exclamationmark.triangle" });
+    $done({ title: "❌ IP 检测失败", content: error || "无数据" });
     return;
   }
 
@@ -40,9 +40,7 @@ $httpClient.get(url, function(error, response, data) {
 
   $done({
     title: `${flag} ${d.query}`,
-    content: content,
-    icon: score >= 70 ? "checkmark.shield.fill" : score >= 40 ? "exclamationmark.shield.fill" : "xmark.shield.fill",
-    "icon-color": score >= 70 ? "#34C759" : score >= 40 ? "#FF9500" : "#FF3B30"
+    content: content
   });
 });
 
