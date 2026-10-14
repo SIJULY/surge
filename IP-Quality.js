@@ -39,7 +39,7 @@ $httpClient.get(url, function(error, response, data) {
   ].join("\n");
 
   $done({
-    title: `${flag} ${d.query}`,
+    title: `🍃IP纯净度`,
     content: content
   });
 });
