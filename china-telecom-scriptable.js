@@ -994,20 +994,26 @@ function loadCfg() {
 /** App 内首次运行且无配置时，弹窗输入并保存 */
 async function ensureCfgInteractive(cfg) {
   if (config.runsInWidget) return cfg;
-  if (cfg.phone && cfg.password && cfg.androidId) return cfg;
+  // App 内运行每次都弹设置窗，方便修改配置
   const a = new Alert();
   a.title = '中国电信小组件';
-  a.message = '首次使用请输入 App 登录信息';
+  a.message = '填写 App 登录信息（已保存的值会默认填入）';
   a.addTextField('手机号（11 位）', cfg.phone || '');
   a.addSecureTextField('服务密码', cfg.password || '');
   a.addTextField('AndroidID（16 位）', cfg.androidId || '');
   a.addAction('保存');
   a.addCancelAction('取消');
   if ((await a.present()) === 0) {
-    cfg.phone = (a.textFieldValue(0) || '').trim();
-    cfg.password = a.textFieldValue(1) || '';
-    cfg.androidId = (a.textFieldValue(2) || '').trim().toLowerCase();
-    try { Keychain.set(CTK.cfg, JSON.stringify(cfg)); } catch (e) {}
+    const phone = (a.textFieldValue(0) || '').trim();
+    const password = a.textFieldValue(1) || '';
+    const androidId = (a.textFieldValue(2) || '').trim().toLowerCase();
+    // 只有三项都填了才保存，避免空值覆盖已有配置
+    if (phone && password && androidId) {
+      cfg.phone = phone;
+      cfg.password = password;
+      cfg.androidId = androidId;
+      try { Keychain.set(CTK.cfg, JSON.stringify(cfg)); } catch (e) {}
+    }
   }
   return cfg;
 }
