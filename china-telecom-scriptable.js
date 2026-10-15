@@ -9,7 +9,7 @@
  *     输入后保存到钥匙串，以后不用再填
  *  3. 回到桌面添加 Scriptable 小组件（小/中尺寸），
  *     在小组件「参数」里也可填写，格式：
- *       手机号|服务密码|AndroidID
+ *       手机号|服务密码|AndroidID|是否显示已用|是否显示定向|透明背景(1)
  *     例：13800000000|123456|abcdef1234567890
  *     参数第 4 段填 1 → 显示已用流量（默认显示剩余）
  *     参数第 5 段填 0 → 隐藏定向流量卡
@@ -966,13 +966,13 @@ async function loadData(ctx) {
 /* ---------- 渲染层（Widget DSL） ---------- */
 
 // 四卡图标：话费¥ / 通用蜂窝 / 定向闪电 / 语音电话
-const FEE_ICON = 'yensign.circle.fill';
+const FEE_ICON = 'yensign.circle';
 const FEE_ICON_COLOR = '#FF9500';
 const GENERAL_ICON = 'antenna.radiowaves.left.and.right';
 const GENERAL_ICON_COLOR = '#0A84FF';
 const DIRECT_ICON = 'bolt.fill';
 const DIRECT_ICON_COLOR = '#AF52DE';
-const VOICE_ICON = 'phone.circle.fill';
+const VOICE_ICON = 'phone.circle';
 const VOICE_ICON_COLOR = '#34C759';
 
 /* ================= Scriptable 适配层 ================= */
@@ -997,6 +997,7 @@ function loadCfg() {
     if (p[2] && p[2].trim()) cfg.androidId = p[2].trim().toLowerCase();
     if (p.length > 3 && p[3] !== '') cfg.showUsedFlow = (p[3] === '1');
     if (p.length > 4 && p[4] !== '') cfg.showDirect = (p[4] !== '0');
+    if (p.length > 5 && p[5] !== '') cfg.transparent = (p[5] === '1');
     try { Keychain.set(CTK.cfg, JSON.stringify(cfg)); } catch (e) {}
   }
   return cfg;
@@ -1216,10 +1217,14 @@ async function main() {
   const title = '中国电信';
   const ctx = makeCtx(cfg);
   const w = new ListWidget();
+  // 透明背景：第 6 段参数为 1 时启用
+  if (cfg.transparent) {
+    w.backgroundColor = new Color('#000000', 0);
+  }
   try {
     const { configured, ds, fromCache, cookieDead } = await loadData(ctx);
     if (!configured) {
-      buildErrorWidget(w, title, '未配置账号\n在小组件「参数」中填写\n手机号|服务密码|AndroidID');
+      buildErrorWidget(w, title, '未配置账号\n在小组件「参数」中填写\n手机号|服务密码|AndroidID|是否显示已用|是否显示定向|透明背景(1)');
       w.url = 'https://e.dlife.cn/index.do';
     } else if (!ds) {
       buildErrorWidget(w, title, cookieDead ? '登录已失效\n请检查账号参数' : '数据获取失败\n请检查网络后重试');
