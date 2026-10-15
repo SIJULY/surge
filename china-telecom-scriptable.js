@@ -1003,19 +1003,22 @@ async function ensureCfgInteractive(cfg) {
   a.addTextField('手机号（11 位）', cfg.phone || '');
   a.addSecureTextField('服务密码', cfg.password || '');
   a.addTextField('AndroidID（16 位）', cfg.androidId || '');
+  a.addTextField('透明背景（填 1 启用）', cfg.transparent ? '1' : '');
   a.addAction('保存');
   a.addCancelAction('取消');
   if ((await a.present()) === 0) {
     const phone = (a.textFieldValue(0) || '').trim();
     const password = a.textFieldValue(1) || '';
     const androidId = (a.textFieldValue(2) || '').trim().toLowerCase();
-    // 只有三项都填了才保存，避免空值覆盖已有配置
+    const transparent = (a.textFieldValue(3) || '').trim() === '1';
+    // 手机号/密码/AndroidID 三项都填了才更新，避免空值覆盖
     if (phone && password && androidId) {
       cfg.phone = phone;
       cfg.password = password;
       cfg.androidId = androidId;
-      try { Keychain.set(CTK.cfg, JSON.stringify(cfg)); } catch (e) {}
     }
+    cfg.transparent = transparent;
+    try { Keychain.set(CTK.cfg, JSON.stringify(cfg)); } catch (e) {}
   }
   return cfg;
 }
