@@ -911,11 +911,13 @@ async function loadData(ctx) {
   };
   // 0) App 登录链优先（配了手机号+密码+AndroidID 才走）
   const appConfigured = !!((ctx.env.CT_APP_PHONE || '').trim() && ctx.env.CT_APP_PASSWORD && (ctx.env.CT_APP_ANDROID_ID || '').trim());
+  let appErr = '';
   if (appConfigured) {
     try {
       const ds = await tryAppApi(ctx, settings);
       return { configured: true, ds, fromCache: false };
     } catch (e) {
+      appErr = String((e && e.message) || e);
       /* App 失败，掉到 cookie 兜底 */
     }
   }
@@ -954,13 +956,13 @@ async function loadData(ctx) {
     try {
       const ds = parseTelecom(raw.detail, raw.balance, settings);
       ds.updatedAt = raw.at || ds.updatedAt;
-      return { configured, ds, fromCache: true, cookieDead };
+      return { configured, ds, fromCache: true, cookieDead, appErr };
     } catch (_) {
       /* 解析失败就掉到旧缓存 */
     }
   }
   const cached = ctx.storage.getJSON('ct_datasource');
-  return { configured, ds: cached || null, fromCache: !!cached, cookieDead };
+  return { configured, ds: cached || null, fromCache: !!cached, cookieDead, appErr };
 }
 
 /* ================= Scriptable 适配层 ================= */
@@ -1333,9 +1335,13 @@ async function main() {
     w.backgroundColor = new Color(UI.bg);
   }
   try {
-    const { configured, ds, fromCache, cookieDead } = await loadData(ctx);
+    const { configured, ds, fromCache, cookieDead, appErr } = await loadData(ctx);
     if (!configured) {
-      buildErrorWidget(w, '未配置账号\n在小组件「参数」中填写\n手机号|服务密码|AndroidID|是否显示已用|是否显示定向|透明背景(1)');
+      // 如果配了 App 账号但登录失败，显示真实错误而不是"未配置"
+      const msg = appErr
+        ? `App 登录失败\n${String(appErr).slice(0, 100)}`
+        : '未配置账号\n在小组件「参数」中填写\n手机号|服务密码|AndroidID|是否显示已用|是否显示定向|透明背景(1)';
+      buildErrorWidget(w, msg);
       w.url = 'https://e.dlife.cn/index.do';
     } else if (!ds) {
       buildErrorWidget(w, cookieDead ? '登录已失效\n请检查账号参数' : '数据获取失败\n请检查网络后重试');
