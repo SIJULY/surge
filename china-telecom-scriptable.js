@@ -1129,13 +1129,13 @@ const UI = {
 
 // 四卡图标（Egern 原版）：话费¥ / 通用蜂窝 / 定向闪电 / 语音电话
 // fee/voice 用非 fill 版，避免 Scriptable 纯色 tint 后变成实心圆
-const FEE_ICON = 'yensign.circle';
+const FEE_ICON = 'yensign.circle.fill';
 const FEE_COLOR = '#FF9500';
 const GENERAL_ICON = 'antenna.radiowaves.left.and.right';
 const GENERAL_COLOR = '#0A84FF';
 const DIRECT_ICON = 'bolt.fill';
 const DIRECT_COLOR = '#AF52DE';
-const VOICE_ICON = 'phone.circle';
+const VOICE_ICON = 'phone.circle.fill';
 const VOICE_COLOR = '#34C759';
 
 // 标题行（Egern 原版）：● 状态点 + 中国电信 + 更新时间
@@ -1175,14 +1175,14 @@ function quadCard(parent, sfName, colorHex, data, fourCard) {
   img.centerAlignImage();
   col.addSpacer(4);
   const tt = col.addText(titleText);
-  tt.font = Font.systemFont(11);
-  tt.textColor = UI.gray;
+  tt.font = Font.systemFont(12);
+  tt.textColor = UI.text;
   tt.centerAlignText();
   tt.lineLimit = 1;
   tt.minimumScaleFactor = 0.8;
   col.addSpacer(2);
   const nn = col.addText(numberText);
-  nn.font = Font.boldSystemFont(fourCard ? 15 : 18);
+  nn.font = Font.boldSystemFont(fourCard ? 17 : 20);
   nn.textColor = UI.text;
   nn.centerAlignText();
   nn.lineLimit = 1;
