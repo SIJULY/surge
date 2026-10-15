@@ -1087,19 +1087,25 @@ function sShowDirect(cfg, ds) {
   return !!(ds && ds.hasDirectFlow);
 }
 
-/* ================= 深色卡片 UI ================= */
+/* ================= 简洁现代 UI（自适应深浅色） ================= */
+
+const _isDark = (typeof Device !== 'undefined' && typeof Device.isUsingDarkAppearance === 'function')
+  ? Device.isUsingDarkAppearance() : true;
 
 const UI = {
-  bg: '#1C1C1E',
-  card: '#2C2C2E',
-  track: '#3A3A3C',
-  white: '#FFFFFF',
-  gray: '#8E8E93',
-  blue: '#0A84FF',
-  purple: '#AF52DE',
-  green: '#30D158',
-  yellow: '#FFD60A',
-  red: '#FF453A',
+  bg: Color.dynamic(new Color('#FFFFFF'), new Color('#1C1C1E')),
+  card: Color.dynamic(new Color('#F2F2F7'), new Color('#2C2C2E')),
+  text: Color.dynamic(new Color('#000000'), new Color('#FFFFFF')),
+  white: Color.dynamic(new Color('#000000'), new Color('#FFFFFF')), // 兼容旧引用
+  gray: new Color('#8E8E93'),
+  subDim: Color.dynamic(new Color('#AEAEB2'), new Color('#636366')),
+  divider: new Color(_isDark ? '#2C2C2E' : '#E5E5EA'),
+  track: new Color(_isDark ? '#2C2C2E' : '#E5E5EA'),
+  blue: new Color('#0A84FF'),
+  purple: new Color('#AF52DE'),
+  green: new Color('#30D158'),
+  yellow: new Color('#FFD60A'),
+  red: new Color('#FF3B30'),
 };
 
 function clamp01(v) {
@@ -1108,219 +1114,167 @@ function clamp01(v) {
   return Math.min(1, Math.max(0, v));
 }
 
-// 百分比：flow.percent 为剩余百分比；已用模式下换算成已用百分比
+// flow.percent 为剩余百分比；已用模式下换算成已用百分比，返回 0~1
 function pctFrac(flow, showUsed) {
   let p = Number(flow && flow.percent);
   if (!isFinite(p)) p = 0;
   if (showUsed) p = 100 - p;
   return clamp01(p / 100);
 }
-function pctText(flow, showUsed) {
-  return `${Math.round(pctFrac(flow, showUsed) * 100)}%`;
-}
 
-// 多段直线逼近画圆弧（DrawContext 无 arc API）
-function strokeArc(ctx, cx, cy, r, a0, a1, colorHex, lw) {
-  if (!(a1 > a0)) return;
-  const segs = Math.max(12, Math.ceil(72 * (a1 - a0) / (Math.PI * 2)));
-  const p = new Path();
-  for (let i = 0; i <= segs; i++) {
-    const a = a0 + (a1 - a0) * i / segs;
-    const x = cx + r * Math.cos(a);
-    const y = cy + r * Math.sin(a);
-    if (i === 0) p.move(new Point(x, y));
-    else p.addLine(new Point(x, y));
-  }
-  ctx.setStrokeColor(new Color(colorHex));
-  ctx.setLineWidth(lw);
-  ctx.addPath(p);
-  ctx.strokePath();
-}
-
-// 双圆环：外圈通用流量(蓝) / 内圈定向流量(绿)，progress 0~1
-function drawRings(size, pOuter, pInner) {
+// 横向进度条：80x4pt 胶囊形，2x 绘制
+function drawBar(frac, color) {
+  const W = 160, H = 8, r = H / 2;
   const ctx = new DrawContext();
-  ctx.size = new Size(size, size);
+  ctx.size = new Size(W, H);
   ctx.opaque = false;
   ctx.respectScreenScale = true;
-  const cx = size / 2, cy = size / 2;
-  const lw = Math.max(8, size * 0.11);
-  const rOuter = size / 2 - lw / 2 - 1;
-  const rInner = rOuter - lw - 5;
-  // 背景轨道
-  ctx.setLineWidth(lw);
-  ctx.setStrokeColor(new Color(UI.track));
-  ctx.strokeEllipse(new Rect(cx - rOuter, cy - rOuter, rOuter * 2, rOuter * 2));
-  ctx.strokeEllipse(new Rect(cx - rInner, cy - rInner, rInner * 2, rInner * 2));
-  // 进度弧（从顶部顺时针）
-  const a0 = -Math.PI / 2;
-  strokeArc(ctx, cx, cy, rOuter, a0, a0 + Math.PI * 2 * clamp01(pOuter), UI.blue, lw);
-  strokeArc(ctx, cx, cy, rInner, a0, a0 + Math.PI * 2 * clamp01(pInner), UI.green, lw);
+  ctx.setFillColor(UI.track);
+  ctx.fillRect(new Rect(r, 0, W - H, H));
+  ctx.fillEllipse(new Rect(0, 0, H, H));
+  ctx.fillEllipse(new Rect(W - H, 0, H, H));
+  const pw = Math.max(H, W * clamp01(frac));
+  ctx.setFillColor(color);
+  if (pw <= H + 0.5) {
+    ctx.fillEllipse(new Rect(0, 0, H, H));
+  } else {
+    ctx.fillRect(new Rect(r, 0, pw - H, H));
+    ctx.fillEllipse(new Rect(0, 0, H, H));
+    ctx.fillEllipse(new Rect(pw - H, 0, H, H));
+  }
   return ctx.getImage();
 }
 
-function addHeaderRow(w, ds, fromCache, cookieDead) {
+// 8pt 彩色小圆点
+function addDot(parent, color) {
+  const d = parent.addText('\u25CF');
+  d.font = Font.systemFont(8);
+  d.textColor = color;
+  d.lineLimit = 1;
+}
+
+// 顶部标题行：左"中国电信"(13pt灰)，右"更新 HH:MM"(11pt)
+function addHeader(w, ds, fromCache, cookieDead) {
   const t = ds && ds.updatedAt ? fmtTime(ds.updatedAt) : '--:--';
-  const srcLabel = ds && ds.source === 'app' ? ' · App' : '';
+  const srcLabel = ds && ds.source === 'app' ? ' \u00B7 App' : '';
   const row = w.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  const ic = row.addText('📶');
-  ic.font = Font.systemFont(13);
-  row.addSpacer(5);
   const tt = row.addText('中国电信');
-  tt.font = Font.boldSystemFont(14);
-  tt.textColor = new Color(UI.white);
+  tt.font = Font.systemFont(13);
+  tt.textColor = UI.gray;
   row.addSpacer();
-  const rt = row.addText(cookieDead ? '⚠️ 登录失效' : fromCache ? `缓存 ${t}${srcLabel}` : `更新 ${t}${srcLabel}`);
-  rt.font = Font.systemFont(10);
-  rt.textColor = new Color(cookieDead ? UI.red : UI.gray);
+  const rt = row.addText(cookieDead ? '登录失效' : fromCache ? `缓存 ${t}${srcLabel}` : `更新 ${t}${srcLabel}`);
+  rt.font = Font.systemFont(11);
+  rt.textColor = cookieDead ? UI.red : UI.subDim;
   rt.lineLimit = 1;
 }
 
-// 右侧卡片内一行：图标+标题(灰)左 / 数值(白粗)+单位(灰)+百分比(彩)右
-function addStatRow(card, emoji, flow, showUsed, pctColor) {
-  const row = card.addStack();
+// 1px 分隔线
+function addDivider(parent) {
+  const d = parent.addStack();
+  d.backgroundColor = UI.divider;
+  d.size = new Size(0, 1);
+}
+
+// 一行流量数据：圆点+标题在左，数值+单位+进度条在右
+function addFlowRow(parent, dotColor, title, number, unit, frac) {
+  const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  const ic = row.addText(emoji);
-  ic.font = Font.systemFont(12);
-  row.addSpacer(5);
-  const tt = row.addText(flow.title);
-  tt.font = Font.systemFont(12);
-  tt.textColor = new Color(UI.gray);
+  addDot(row, dotColor);
+  row.addSpacer(6);
+  const tt = row.addText(title);
+  tt.font = Font.systemFont(13);
+  tt.textColor = UI.text;
   tt.lineLimit = 1;
   row.addSpacer();
-  const nn = row.addText(`${flow.number}`);
-  nn.font = Font.boldSystemFont(15);
-  nn.textColor = new Color(UI.white);
+  const nn = row.addText(`${number}`);
+  nn.font = Font.boldMonospacedSystemFont(15);
+  nn.textColor = UI.text;
   nn.lineLimit = 1;
-  const uu = row.addText(` ${flow.unit}`);
-  uu.font = Font.systemFont(11);
-  uu.textColor = new Color(UI.gray);
-  const pp = row.addText(pctText(flow, showUsed));
-  pp.font = Font.boldSystemFont(13);
-  pp.textColor = new Color(pctColor);
-  pp.lineLimit = 1;
-  pp.size = new Size(42, 0);
-  pp.rightAlignText();
+  row.addSpacer(4);
+  const uu = row.addText(unit);
+  uu.font = Font.systemFont(13);
+  uu.textColor = UI.gray;
+  uu.lineLimit = 1;
+  row.addSpacer(8);
+  const bar = row.addImage(drawBar(frac, dotColor));
+  bar.imageSize = new Size(80, 4);
 }
 
 function buildSmallWidget(w, cfg, ds, fromCache, cookieDead) {
   w.setPadding(12, 14, 10, 14);
-  addHeaderRow(w, ds, fromCache, cookieDead);
-  w.addSpacer(8);
-  const showUsed = !!cfg.showUsedFlow;
-  const four = sShowDirect(cfg, ds);
-  const ft = w.addText('话费余额');
-  ft.font = Font.systemFont(11);
-  ft.textColor = new Color(UI.gray);
-  ft.centerAlignText();
+  const tt = w.addText('中国电信');
+  tt.font = Font.systemFont(12);
+  tt.textColor = UI.gray;
+  w.addSpacer(6);
   const fv = w.addText(`¥${ds.fee.number}`);
-  fv.font = Font.boldSystemFont(26);
-  fv.textColor = new Color(UI.white);
-  fv.centerAlignText();
+  fv.font = Font.boldMonospacedSystemFont(26);
+  fv.textColor = UI.text;
   fv.lineLimit = 1;
   fv.minimumScaleFactor = 0.7;
-  w.addSpacer(8);
-  miniStatRow(w, '📶', ds.generalFlow, showUsed, UI.blue);
-  w.addSpacer(4);
-  if (four) {
-    miniStatRow(w, '⚡', ds.directFlow, showUsed, UI.purple);
-    w.addSpacer(4);
-  }
-  miniStatRow(w, '📞', ds.voice, showUsed, UI.green);
+  w.addSpacer(2);
+  const ft = w.addText('话费余额');
+  ft.font = Font.systemFont(11);
+  ft.textColor = UI.gray;
   w.addSpacer();
-}
-
-function miniStatRow(w, emoji, flow, showUsed, pctColor) {
   const row = w.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  const ic = row.addText(emoji);
-  ic.font = Font.systemFont(11);
-  row.addSpacer(4);
-  const tt = row.addText(flow.title);
-  tt.font = Font.systemFont(11);
-  tt.textColor = new Color(UI.gray);
-  tt.lineLimit = 1;
+  const g = row.addText(`通用 ${ds.generalFlow.number}${ds.generalFlow.unit}`);
+  g.font = Font.systemFont(11);
+  g.textColor = UI.gray;
+  g.lineLimit = 1;
   row.addSpacer();
-  const nn = row.addText(`${flow.number} ${flow.unit}`);
-  nn.font = Font.boldSystemFont(13);
-  nn.textColor = new Color(UI.white);
-  nn.lineLimit = 1;
-  const pp = row.addText(` ${pctText(flow, showUsed)}`);
-  pp.font = Font.boldSystemFont(12);
-  pp.textColor = new Color(pctColor);
-  pp.lineLimit = 1;
+  const v = row.addText(`语音 ${ds.voice.number}${ds.voice.unit}`);
+  v.font = Font.systemFont(11);
+  v.textColor = UI.gray;
+  v.lineLimit = 1;
 }
 
 function buildMediumWidget(w, cfg, ds, fromCache, cookieDead) {
-  w.setPadding(12, 14, 12, 14);
-  addHeaderRow(w, ds, fromCache, cookieDead);
-  w.addSpacer(8);
-  const showUsed = !!cfg.showUsedFlow;
-  const four = sShowDirect(cfg, ds);
-
-  const body = w.addStack();
-  body.layoutHorizontally();
-  body.centerAlignContent();
-
-  // 左栏：双圆环 + 话费余额
-  const left = body.addStack();
-  left.layoutVertically();
-  left.centerAlignContent();
-  left.size = new Size(112, 0);
-  const ring = left.addImage(drawRings(86, pctFrac(ds.generalFlow, showUsed), four ? pctFrac(ds.directFlow, showUsed) : 0));
-  ring.imageSize = new Size(86, 86);
-  ring.centerAlignImage();
-  left.addSpacer(5);
-  const ft = left.addText('话费余额');
-  ft.font = Font.systemFont(10);
-  ft.textColor = new Color(UI.gray);
-  ft.centerAlignText();
-  const fv = left.addText(`¥${ds.fee.number}`);
-  fv.font = Font.boldSystemFont(21);
-  fv.textColor = new Color(UI.white);
-  fv.centerAlignText();
+  w.setPadding(10, 16, 8, 16);
+  addHeader(w, ds, fromCache, cookieDead);
+  w.addSpacer(4);
+  const fv = w.addText(`¥${ds.fee.number}`);
+  fv.font = Font.boldMonospacedSystemFont(24);
+  fv.textColor = UI.text;
   fv.lineLimit = 1;
   fv.minimumScaleFactor = 0.7;
-
-  body.addSpacer(10);
-
-  // 右栏：深灰圆角卡片
-  const card = body.addStack();
-  card.layoutVertically();
-  card.backgroundColor = new Color(UI.card);
-  card.cornerRadius = 12;
-  card.setPadding(10, 12, 10, 12);
-  card.centerAlignContent();
-  card.size = new Size(179, 0);
-  addStatRow(card, '📶', ds.generalFlow, showUsed, UI.blue);
-  card.addSpacer(7);
+  w.addSpacer(2);
+  const ft = w.addText('话费余额');
+  ft.font = Font.systemFont(11);
+  ft.textColor = UI.gray;
+  w.addSpacer(4);
+  addDivider(w);
+  w.addSpacer(4);
+  const showUsed = !!cfg.showUsedFlow;
+  const four = sShowDirect(cfg, ds);
+  addFlowRow(w, UI.blue, ds.generalFlow.title, ds.generalFlow.number, ds.generalFlow.unit, pctFrac(ds.generalFlow, showUsed));
+  w.addSpacer(4);
   if (four) {
-    addStatRow(card, '⚡', ds.directFlow, showUsed, UI.purple);
-    card.addSpacer(7);
+    addFlowRow(w, UI.purple, ds.directFlow.title, ds.directFlow.number, ds.directFlow.unit, pctFrac(ds.directFlow, showUsed));
+    w.addSpacer(4);
   }
-  addStatRow(card, '📞', ds.voice, showUsed, UI.green);
-
+  addFlowRow(w, UI.green, ds.voice.title, ds.voice.number, ds.voice.unit, pctFrac(ds.voice, showUsed));
   w.addSpacer();
 }
 
 function buildErrorWidget(w, message) {
-  w.setPadding(12, 14, 12, 14);
-  addHeaderRow(w, null, false, false);
+  w.setPadding(14, 16, 14, 16);
+  addHeader(w, null, false, false);
   w.addSpacer(10);
-  const img = w.addImage(SFSymbol.named('exclamationmark.triangle').image);
-  img.tintColor = new Color('#FF9500');
-  img.imageSize = new Size(26, 26);
+  const img = w.addImage(SFSymbol.named('exclamationmark.circle.fill').image);
+  img.tintColor = UI.red;
+  img.imageSize = new Size(28, 28);
   img.centerAlignImage();
-  w.addSpacer(6);
+  w.addSpacer(8);
   const t = w.addText(message);
-  t.font = Font.systemFont(11);
-  t.textColor = new Color(UI.gray);
+  t.font = Font.systemFont(12);
+  t.textColor = UI.gray;
   t.centerAlignText();
-  t.lineLimit = 5;
+  t.lineLimit = 4;
   w.addSpacer();
 }
 
@@ -1331,12 +1285,8 @@ async function main() {
   cfg = await ensureCfgInteractive(cfg);
   const ctx = makeCtx(cfg);
   const w = new ListWidget();
-  // 深色卡片底；第 6 段参数为 1 时透明背景
-  if (cfg.transparent) {
-    w.backgroundColor = new Color('#000000', 0);
-  } else {
-    w.backgroundColor = new Color(UI.bg);
-  }
+  // 自适应深浅色；第 6 段参数为 1 时强制透明背景
+  w.backgroundColor = cfg.transparent ? new Color('#000000', 0) : UI.bg;
   try {
     const { configured, ds, fromCache, cookieDead, appErr } = await loadData(ctx);
     if (!configured) {
