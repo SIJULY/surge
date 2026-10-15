@@ -1301,7 +1301,7 @@ async function main() {
   const ctx = makeCtx(cfg);
   const w = new ListWidget();
   // 自适应深浅色；第 6 段参数为 1 时强制透明背景
-  // 透明背景：优先用用户选择的壁纸图，没有则用毛玻璃半透明
+  // 透明背景（照搬 Link_11）：有壁纸图就用图，没有就用默认背景色
   if (cfg.transparent) {
     try {
       const fm = FileManager.local();
@@ -1309,10 +1309,10 @@ async function main() {
       if (fm.fileExists(bgPath)) {
         w.backgroundImage = fm.readImage(bgPath);
       } else {
-        w.backgroundColor = Color.dynamic(new Color('#E2E2E7', 0.35), new Color('#2C2C2F', 0.65));
+        w.backgroundColor = UI.bg;
       }
     } catch (e) {
-      w.backgroundColor = Color.dynamic(new Color('#E2E2E7', 0.35), new Color('#2C2C2F', 0.65));
+      w.backgroundColor = UI.bg;
     }
   } else {
     w.backgroundColor = UI.bg;
