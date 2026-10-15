@@ -1044,7 +1044,7 @@ async function surgeMain() {
     const { configured, ds, fromCache, cookieDead } = await loadData(ctx);
     if (!configured) {
       $done({
-        title: `\u0001F534 ${title}`,
+        title: `🔴 ${title}`,
         content: '未配置账号参数\n请在模块设置中填写\nCT_APP_PHONE / CT_APP_PASSWORD / CT_APP_ANDROID_ID',
         icon: 'exclamationmark.triangle',
       });
@@ -1052,30 +1052,30 @@ async function surgeMain() {
     }
     if (!ds) {
       $done({
-        title: `\u0001F534 ${title}`,
+        title: `🔴 ${title}`,
         content: cookieDead ? '登录已失效\n请检查账号参数是否正确' : '数据获取失败\n请检查网络后手动刷新',
         icon: 'exclamationmark.triangle',
       });
       return;
     }
     const lines = [];
-    lines.push(`${ds.fee.title}：${ds.fee.number} ${ds.fee.unit}`);
-    lines.push(`${ds.generalFlow.title}：${ds.generalFlow.number} ${ds.generalFlow.unit}`);
+    lines.push(`💰 ${ds.fee.title}：${ds.fee.number} ${ds.fee.unit}`);
+    lines.push(`📶 ${ds.generalFlow.title}：${ds.generalFlow.number} ${ds.generalFlow.unit}`);
     if (showDirectCard(ctx, ds)) {
-      lines.push(`${ds.directFlow.title}：${ds.directFlow.number} ${ds.directFlow.unit}`);
+      lines.push(`⚡ ${ds.directFlow.title}：${ds.directFlow.number} ${ds.directFlow.unit}`);
     }
-    lines.push(`${ds.voice.title}：${ds.voice.number} ${ds.voice.unit}`);
+    lines.push(`📞 ${ds.voice.title}：${ds.voice.number} ${ds.voice.unit}`);
     const t = ds.updatedAt ? fmtTime(ds.updatedAt) : '--:--';
     const srcLabel = ds.source === 'app' ? ' \u00B7 App' : '';
     const cacheLabel = fromCache ? '（缓存）' : '';
     lines.push(`更新 ${t}${srcLabel}${cacheLabel}`);
     $done({
-      title: `${cookieDead ? '\u0001F534' : '\u0001F7E2'} ${title}`,
+      title: `${cookieDead ? '🔴' : '🟢'} ${title}`,
       content: lines.join('\n'),
     });
   } catch (e) {
     $done({
-      title: `\u0001F534 ${title}`,
+      title: `🔴 ${title}`,
       content: `脚本异常：${(e && e.message) || e}`,
       icon: 'exclamationmark.triangle',
     });
