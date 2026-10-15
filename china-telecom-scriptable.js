@@ -805,7 +805,7 @@ function buildDs(m, opts) {
   };
 
   const generalFlow = mkFlow('通用剩余', m.genTotal, m.genBalance, m.genUsed);
-  generalFlow.color = GENERAL_ICON_COLOR;
+  generalFlow.color = UI.blue;
   if (m.isUnlimitedFlow) {
     const used = formatFlow(m.genUsed);
     generalFlow.title = '通用已用';
@@ -813,7 +813,7 @@ function buildDs(m, opts) {
     generalFlow.unit = used.unit;
   }
   const directFlow = mkFlow('定向剩余', m.dirTotal, m.dirBalance, m.dirUsed);
-  directFlow.color = DIRECT_ICON_COLOR;
+  directFlow.color = UI.purple;
 
   const voiceUsed = Math.max(0, m.voiceTotal - m.voiceBalance);
   const voice = {
@@ -821,7 +821,7 @@ function buildDs(m, opts) {
     number: `${showUsedFlow ? voiceUsed : m.voiceBalance}`,
     unit: '分钟',
     percent: +(((m.voiceBalance / (m.voiceTotal || 1)) * 100).toFixed(2)),
-    color: VOICE_ICON_COLOR,
+    color: UI.green,
   };
 
   const fee = {
