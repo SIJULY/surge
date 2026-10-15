@@ -1108,173 +1108,169 @@ const UI = {
   red: new Color('#FF3B30'),
 };
 
-function clamp01(v) {
-  v = Number(v);
-  if (!isFinite(v)) return 0;
-  return Math.min(1, Math.max(0, v));
-}
+// 四卡图标（Egern 原版）：话费¥ / 通用蜂窝 / 定向闪电 / 语音电话
+// fee/voice 用非 fill 版，避免 Scriptable 纯色 tint 后变成实心圆
+const FEE_ICON = 'yensign.circle';
+const FEE_COLOR = '#FF9500';
+const GENERAL_ICON = 'antenna.radiowaves.left.and.right';
+const GENERAL_COLOR = '#0A84FF';
+const DIRECT_ICON = 'bolt.fill';
+const DIRECT_COLOR = '#AF52DE';
+const VOICE_ICON = 'phone.circle';
+const VOICE_COLOR = '#34C759';
 
-// flow.percent 为剩余百分比；已用模式下换算成已用百分比，返回 0~1
-function pctFrac(flow, showUsed) {
-  let p = Number(flow && flow.percent);
-  if (!isFinite(p)) p = 0;
-  if (showUsed) p = 100 - p;
-  return clamp01(p / 100);
-}
-
-// 横向进度条：80x4pt 胶囊形，2x 绘制
-function drawBar(frac, color) {
-  const W = 160, H = 8, r = H / 2;
-  const ctx = new DrawContext();
-  ctx.size = new Size(W, H);
-  ctx.opaque = false;
-  ctx.respectScreenScale = true;
-  ctx.setFillColor(UI.track);
-  ctx.fillRect(new Rect(r, 0, W - H, H));
-  ctx.fillEllipse(new Rect(0, 0, H, H));
-  ctx.fillEllipse(new Rect(W - H, 0, H, H));
-  const pw = Math.max(H, W * clamp01(frac));
-  ctx.setFillColor(color);
-  if (pw <= H + 0.5) {
-    ctx.fillEllipse(new Rect(0, 0, H, H));
-  } else {
-    ctx.fillRect(new Rect(r, 0, pw - H, H));
-    ctx.fillEllipse(new Rect(0, 0, H, H));
-    ctx.fillEllipse(new Rect(pw - H, 0, H, H));
-  }
-  return ctx.getImage();
-}
-
-// 8pt 彩色小圆点
-function addDot(parent, color) {
-  const d = parent.addText('\u25CF');
-  d.font = Font.systemFont(8);
-  d.textColor = color;
-  d.lineLimit = 1;
-}
-
-// 顶部标题行：左"中国电信"(13pt灰)，右"更新 HH:MM"(11pt)
-function addHeader(w, ds, fromCache, cookieDead) {
+// 标题行（Egern 原版）：● 状态点 + 中国电信 + 更新时间
+function addHeaderEgern(w, ds, fromCache, cookieDead) {
   const t = ds && ds.updatedAt ? fmtTime(ds.updatedAt) : '--:--';
+  // 状态点：绿=登录有效，红=登录失效，灰=缓存
+  const dotColor = cookieDead ? '#FF3B30' : fromCache ? '#8E8E93' : '#30D158';
   const srcLabel = ds && ds.source === 'app' ? ' \u00B7 App' : '';
   const row = w.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
+  const dot = row.addText('\u25CF');
+  dot.font = Font.systemFont(8);
+  dot.textColor = new Color(dotColor);
+  dot.lineLimit = 1;
+  row.addSpacer(5);
   const tt = row.addText('中国电信');
-  tt.font = Font.systemFont(13);
-  tt.textColor = UI.gray;
-  row.addSpacer();
-  const rt = row.addText(cookieDead ? '登录失效' : fromCache ? `缓存 ${t}${srcLabel}` : `更新 ${t}${srcLabel}`);
-  rt.font = Font.systemFont(11);
-  rt.textColor = cookieDead ? UI.red : UI.subDim;
-  rt.lineLimit = 1;
-}
-
-// 1px 分隔线
-function addDivider(parent) {
-  const d = parent.addStack();
-  d.backgroundColor = UI.divider;
-  d.size = new Size(0, 1);
-}
-
-// 一行流量数据：圆点+标题在左，数值+单位+进度条在右
-function addFlowRow(parent, dotColor, title, number, unit, frac) {
-  const row = parent.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
-  addDot(row, dotColor);
-  row.addSpacer(6);
-  const tt = row.addText(title);
-  tt.font = Font.systemFont(13);
+  tt.font = Font.semiboldSystemFont(13);
   tt.textColor = UI.text;
   tt.lineLimit = 1;
   row.addSpacer();
-  const nn = row.addText(`${number}`);
-  nn.font = Font.boldMonospacedSystemFont(15);
+  const rt = row.addText(cookieDead ? '\u26A0\uFE0F 登录失效' : fromCache ? `缓存 ${t}${srcLabel}` : `更新 ${t}${srcLabel}`);
+  rt.font = Font.systemFont(11);
+  rt.textColor = UI.gray;
+  rt.lineLimit = 1;
+}
+
+// 四宫格卡：图标 / 标题 / 大数值（Egern quadCard）
+function quadCard(parent, sfName, colorHex, data, fourCard) {
+  const titleText = fourCard ? data.title : `${data.title}(${data.unit})`;
+  const numberText = fourCard ? `${data.number}${data.unit}` : String(data.number);
+  const col = parent.addStack();
+  col.layoutVertically();
+  const img = col.addImage(SFSymbol.named(sfName).image);
+  img.tintColor = new Color(colorHex);
+  img.imageSize = new Size(30, 30);
+  img.centerAlignImage();
+  col.addSpacer(4);
+  const tt = col.addText(titleText);
+  tt.font = Font.systemFont(11);
+  tt.textColor = UI.gray;
+  tt.centerAlignText();
+  tt.lineLimit = 1;
+  tt.minimumScaleFactor = 0.8;
+  col.addSpacer(2);
+  const nn = col.addText(numberText);
+  nn.font = Font.boldSystemFont(fourCard ? 15 : 18);
   nn.textColor = UI.text;
+  nn.centerAlignText();
   nn.lineLimit = 1;
-  row.addSpacer(4);
-  const uu = row.addText(unit);
-  uu.font = Font.systemFont(13);
-  uu.textColor = UI.gray;
-  uu.lineLimit = 1;
-  row.addSpacer(8);
-  const bar = row.addImage(drawBar(frac, dotColor));
-  bar.imageSize = new Size(80, 4);
+  nn.minimumScaleFactor = 0.7;
+}
+
+// 小尺寸紧凑卡（Egern miniCard）：图标 / 数值 / 标题
+function miniCard(parent, sfName, colorHex, data) {
+  const col = parent.addStack();
+  col.layoutVertically();
+  const img = col.addImage(SFSymbol.named(sfName).image);
+  img.tintColor = new Color(colorHex);
+  img.imageSize = new Size(18, 18);
+  img.centerAlignImage();
+  col.addSpacer(2);
+  const nn = col.addText(String(data.number));
+  nn.font = Font.semiboldSystemFont(13);
+  nn.textColor = UI.text;
+  nn.centerAlignText();
+  nn.lineLimit = 1;
+  nn.minimumScaleFactor = 0.7;
+  const tt = col.addText(data.title);
+  tt.font = Font.systemFont(10);
+  tt.textColor = UI.gray;
+  tt.centerAlignText();
+  tt.lineLimit = 1;
+}
+
+function cardList(cfg, ds) {
+  const four = sShowDirect(cfg, ds);
+  const cards = [
+    [FEE_ICON, FEE_COLOR, ds.fee],
+    [GENERAL_ICON, GENERAL_COLOR, ds.generalFlow],
+  ];
+  if (four) cards.push([DIRECT_ICON, DIRECT_COLOR, ds.directFlow]);
+  cards.push([VOICE_ICON, VOICE_COLOR, ds.voice]);
+  return { cards, four };
 }
 
 function buildSmallWidget(w, cfg, ds, fromCache, cookieDead) {
-  w.setPadding(12, 14, 10, 14);
-  const tt = w.addText('中国电信');
-  tt.font = Font.systemFont(12);
-  tt.textColor = UI.gray;
+  w.setPadding(12, 12, 10, 12);
+  addHeaderEgern(w, ds, fromCache, cookieDead);
   w.addSpacer(6);
-  const fv = w.addText(`¥${ds.fee.number}`);
-  fv.font = Font.boldMonospacedSystemFont(26);
-  fv.textColor = UI.text;
-  fv.lineLimit = 1;
-  fv.minimumScaleFactor = 0.7;
-  w.addSpacer(2);
-  const ft = w.addText('话费余额');
-  ft.font = Font.systemFont(11);
-  ft.textColor = UI.gray;
+  const { cards, four } = cardList(cfg, ds);
+  if (!four) {
+    // 3 卡：话费独占一行居中，第二行通用+语音
+    const r1 = w.addStack();
+    r1.layoutHorizontally();
+    r1.addSpacer();
+    miniCard(r1, cards[0][0], cards[0][1], cards[0][2]);
+    r1.addSpacer();
+    w.addSpacer(6);
+    const r2 = w.addStack();
+    r2.layoutHorizontally();
+    r2.addSpacer();
+    miniCard(r2, cards[1][0], cards[1][1], cards[1][2]);
+    r2.addSpacer();
+    miniCard(r2, cards[2][0], cards[2][1], cards[2][2]);
+    r2.addSpacer();
+  } else {
+    // 4 卡：2x2
+    for (const pair of [[cards[0], cards[1]], [cards[2], cards[3]]]) {
+      const r = w.addStack();
+      r.layoutHorizontally();
+      r.addSpacer();
+      miniCard(r, pair[0][0], pair[0][1], pair[0][2]);
+      r.addSpacer();
+      miniCard(r, pair[1][0], pair[1][1], pair[1][2]);
+      r.addSpacer();
+      w.addSpacer(6);
+    }
+  }
   w.addSpacer();
-  const row = w.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
-  const g = row.addText(`通用 ${ds.generalFlow.number}${ds.generalFlow.unit}`);
-  g.font = Font.systemFont(11);
-  g.textColor = UI.gray;
-  g.lineLimit = 1;
-  row.addSpacer();
-  const v = row.addText(`语音 ${ds.voice.number}${ds.voice.unit}`);
-  v.font = Font.systemFont(11);
-  v.textColor = UI.gray;
-  v.lineLimit = 1;
 }
 
 function buildMediumWidget(w, cfg, ds, fromCache, cookieDead) {
-  w.setPadding(10, 16, 8, 16);
-  addHeader(w, ds, fromCache, cookieDead);
-  w.addSpacer(4);
-  const fv = w.addText(`¥${ds.fee.number}`);
-  fv.font = Font.boldMonospacedSystemFont(24);
-  fv.textColor = UI.text;
-  fv.lineLimit = 1;
-  fv.minimumScaleFactor = 0.7;
-  w.addSpacer(2);
-  const ft = w.addText('话费余额');
-  ft.font = Font.systemFont(11);
-  ft.textColor = UI.gray;
-  w.addSpacer(4);
-  addDivider(w);
-  w.addSpacer(4);
-  const showUsed = !!cfg.showUsedFlow;
-  const four = sShowDirect(cfg, ds);
-  addFlowRow(w, UI.blue, ds.generalFlow.title, ds.generalFlow.number, ds.generalFlow.unit, pctFrac(ds.generalFlow, showUsed));
-  w.addSpacer(4);
-  if (four) {
-    addFlowRow(w, UI.purple, ds.directFlow.title, ds.directFlow.number, ds.directFlow.unit, pctFrac(ds.directFlow, showUsed));
-    w.addSpacer(4);
+  w.setPadding(12, 14, 10, 14);
+  addHeaderEgern(w, ds, fromCache, cookieDead);
+  w.addSpacer(8);
+  const { cards, four } = cardList(cfg, ds);
+  const row = w.addStack();
+  row.layoutHorizontally();
+  row.addSpacer();
+  for (const [icon, color, data] of cards) {
+    quadCard(row, icon, color, data, four);
+    row.addSpacer();
   }
-  addFlowRow(w, UI.green, ds.voice.title, ds.voice.number, ds.voice.unit, pctFrac(ds.voice, showUsed));
   w.addSpacer();
 }
 
 function buildErrorWidget(w, message) {
   w.setPadding(14, 16, 14, 16);
-  addHeader(w, null, false, false);
-  w.addSpacer(10);
-  const img = w.addImage(SFSymbol.named('exclamationmark.circle.fill').image);
-  img.tintColor = UI.red;
-  img.imageSize = new Size(28, 28);
+  const t = w.addText('中国电信');
+  t.font = Font.semiboldSystemFont(13);
+  t.textColor = UI.text;
+  t.lineLimit = 1;
+  w.addSpacer(8);
+  const img = w.addImage(SFSymbol.named('exclamationmark.triangle.fill').image);
+  img.tintColor = new Color('#FF9500');
+  img.imageSize = new Size(24, 24);
   img.centerAlignImage();
   w.addSpacer(8);
-  const t = w.addText(message);
-  t.font = Font.systemFont(12);
-  t.textColor = UI.gray;
-  t.centerAlignText();
-  t.lineLimit = 4;
+  const m = w.addText(message);
+  m.font = Font.systemFont(12);
+  m.textColor = UI.gray;
+  m.centerAlignText();
+  m.lineLimit = 5;
   w.addSpacer();
 }
 
