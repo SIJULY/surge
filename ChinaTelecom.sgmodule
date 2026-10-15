@@ -1,0 +1,9 @@
+#!name=中国电信
+#!desc=显示电信话费/流量/语音余量（App 三步登录链优先，失败回退 cookie）
+#!arguments=CT_APP_PHONE:,CT_APP_PASSWORD:,CT_APP_ANDROID_ID:
+
+[Panel]
+中国电信 = script-name=中国电信,update-interval=21600
+
+[Script]
+中国电信 = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/SIJULY/surge/main/china-telecom-surge.js,argument="CT_APP_PHONE={{{CT_APP_PHONE}}}&CT_APP_PASSWORD={{{CT_APP_PASSWORD}}}&CT_APP_ANDROID_ID={{{CT_APP_ANDROID_ID}}}"
