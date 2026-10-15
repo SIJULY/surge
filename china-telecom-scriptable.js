@@ -1282,7 +1282,9 @@ async function main() {
   const ctx = makeCtx(cfg);
   const w = new ListWidget();
   // 自适应深浅色；第 6 段参数为 1 时强制透明背景
-  w.backgroundColor = cfg.transparent ? new Color('#000000', 0) : UI.bg;
+  w.backgroundColor = cfg.transparent
+    ? Color.dynamic(new Color('#E2E2E7', 0.35), new Color('#2C2C2F', 0.65))
+    : UI.bg;
   try {
     const { configured, ds, fromCache, cookieDead, appErr } = await loadData(ctx);
     if (!configured) {
