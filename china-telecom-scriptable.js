@@ -963,18 +963,6 @@ async function loadData(ctx) {
   return { configured, ds: cached || null, fromCache: !!cached, cookieDead };
 }
 
-/* ---------- 渲染层（Widget DSL） ---------- */
-
-// 四卡图标：话费¥ / 通用蜂窝 / 定向闪电 / 语音电话
-const FEE_ICON = 'yensign.circle';
-const FEE_ICON_COLOR = '#FF9500';
-const GENERAL_ICON = 'antenna.radiowaves.left.and.right';
-const GENERAL_ICON_COLOR = '#0A84FF';
-const DIRECT_ICON = 'bolt.fill';
-const DIRECT_ICON_COLOR = '#AF52DE';
-const VOICE_ICON = 'phone.circle';
-const VOICE_ICON_COLOR = '#34C759';
-
 /* ================= Scriptable 适配层 ================= */
 
 const CTK = {
@@ -1088,113 +1076,229 @@ function sShowDirect(cfg, ds) {
   return !!(ds && ds.hasDirectFlow);
 }
 
-function addHeaderRow(w, title, ds, fromCache, cookieDead) {
+/* ================= 深色卡片 UI ================= */
+
+const UI = {
+  bg: '#1C1C1E',
+  card: '#2C2C2E',
+  track: '#3A3A3C',
+  white: '#FFFFFF',
+  gray: '#8E8E93',
+  blue: '#0A84FF',
+  purple: '#AF52DE',
+  green: '#30D158',
+  yellow: '#FFD60A',
+  red: '#FF453A',
+};
+
+function clamp01(v) {
+  v = Number(v);
+  if (!isFinite(v)) return 0;
+  return Math.min(1, Math.max(0, v));
+}
+
+// 百分比：flow.percent 为剩余百分比；已用模式下换算成已用百分比
+function pctFrac(flow, showUsed) {
+  let p = Number(flow && flow.percent);
+  if (!isFinite(p)) p = 0;
+  if (showUsed) p = 100 - p;
+  return clamp01(p / 100);
+}
+function pctText(flow, showUsed) {
+  return `${Math.round(pctFrac(flow, showUsed) * 100)}%`;
+}
+
+// 多段直线逼近画圆弧（DrawContext 无 arc API）
+function strokeArc(ctx, cx, cy, r, a0, a1, colorHex, lw) {
+  if (!(a1 > a0)) return;
+  const segs = Math.max(12, Math.ceil(72 * (a1 - a0) / (Math.PI * 2)));
+  const p = new Path();
+  for (let i = 0; i <= segs; i++) {
+    const a = a0 + (a1 - a0) * i / segs;
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    if (i === 0) p.move(new Point(x, y));
+    else p.addLine(new Point(x, y));
+  }
+  ctx.setStrokeColor(new Color(colorHex));
+  ctx.setLineWidth(lw);
+  ctx.addPath(p);
+  ctx.strokePath();
+}
+
+// 双圆环：外圈通用流量(蓝) / 内圈定向流量(绿)，progress 0~1
+function drawRings(size, pOuter, pInner) {
+  const ctx = new DrawContext();
+  ctx.size = new Size(size, size);
+  ctx.opaque = false;
+  ctx.respectScreenScale = true;
+  const cx = size / 2, cy = size / 2;
+  const lw = Math.max(8, size * 0.11);
+  const rOuter = size / 2 - lw / 2 - 1;
+  const rInner = rOuter - lw - 5;
+  // 背景轨道
+  ctx.setLineWidth(lw);
+  ctx.setStrokeColor(new Color(UI.track));
+  ctx.strokeEllipse(new Rect(cx - rOuter, cy - rOuter, rOuter * 2, rOuter * 2));
+  ctx.strokeEllipse(new Rect(cx - rInner, cy - rInner, rInner * 2, rInner * 2));
+  // 进度弧（从顶部顺时针）
+  const a0 = -Math.PI / 2;
+  strokeArc(ctx, cx, cy, rOuter, a0, a0 + Math.PI * 2 * clamp01(pOuter), UI.blue, lw);
+  strokeArc(ctx, cx, cy, rInner, a0, a0 + Math.PI * 2 * clamp01(pInner), UI.green, lw);
+  return ctx.getImage();
+}
+
+function addHeaderRow(w, ds, fromCache, cookieDead) {
   const t = ds && ds.updatedAt ? fmtTime(ds.updatedAt) : '--:--';
-  const dotColor = cookieDead ? '#FF3B30' : fromCache ? '#8E8E93' : '#30D158';
   const srcLabel = ds && ds.source === 'app' ? ' · App' : '';
   const row = w.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  const dot = row.addText('\u25CF');
-  dot.font = Font.systemFont(9);
-  dot.textColor = new Color(dotColor);
+  const ic = row.addText('📶');
+  ic.font = Font.systemFont(13);
   row.addSpacer(5);
-  const tt = row.addText(title);
-  tt.font = Font.semiboldSystemFont(13);
+  const tt = row.addText('中国电信');
+  tt.font = Font.boldSystemFont(14);
+  tt.textColor = new Color(UI.white);
   row.addSpacer();
-  const rt = row.addText(cookieDead ? '\u26A0\uFE0F 登录失效' : fromCache ? `缓存 ${t}${srcLabel}` : `更新 ${t}${srcLabel}`);
+  const rt = row.addText(cookieDead ? '⚠️ 登录失效' : fromCache ? `缓存 ${t}${srcLabel}` : `更新 ${t}${srcLabel}`);
   rt.font = Font.systemFont(10);
-  rt.textOpacity = cookieDead ? 1 : 0.55;
+  rt.textColor = new Color(cookieDead ? UI.red : UI.gray);
   rt.lineLimit = 1;
 }
 
-/** 一张数据卡：图标 / 标题 / 数值 */
-function addCard(col, sfName, colorHex, title, number, unit, numSize) {
-  const img = col.addImage(SFSymbol.named(sfName).image);
-  img.tintColor = new Color(colorHex);
-  img.imageSize = new Size(30, 30);
-  img.centerAlignImage();
-  col.addSpacer(4);
-  const tt = col.addText(title);
-  tt.font = Font.systemFont(10);
-  tt.textOpacity = 0.7;
-  tt.centerAlignText();
+// 右侧卡片内一行：图标+标题(灰)左 / 数值(白粗)+单位(灰)+百分比(彩)右
+function addStatRow(card, emoji, flow, showUsed, pctColor) {
+  const row = card.addStack();
+  row.layoutHorizontally();
+  row.centerAlignContent();
+  const ic = row.addText(emoji);
+  ic.font = Font.systemFont(12);
+  row.addSpacer(5);
+  const tt = row.addText(flow.title);
+  tt.font = Font.systemFont(12);
+  tt.textColor = new Color(UI.gray);
   tt.lineLimit = 1;
-  const nn = col.addText(`${number}${unit}`);
-  nn.font = Font.boldSystemFont(numSize);
-  nn.centerAlignText();
+  row.addSpacer();
+  const nn = row.addText(`${flow.number}`);
+  nn.font = Font.boldSystemFont(15);
+  nn.textColor = new Color(UI.white);
   nn.lineLimit = 1;
-  nn.minimumScaleFactor = 0.6;
+  const uu = row.addText(` ${flow.unit}`);
+  uu.font = Font.systemFont(11);
+  uu.textColor = new Color(UI.gray);
+  const pp = row.addText(pctText(flow, showUsed));
+  pp.font = Font.boldSystemFont(13);
+  pp.textColor = new Color(pctColor);
+  pp.lineLimit = 1;
+  pp.size = new Size(42, 0);
+  pp.rightAlignText();
 }
 
-function cardColumn(row, width) {
-  const col = row.addStack();
-  col.layoutVertically();
-  col.centerAlignContent();
-  if (width) col.size = new Size(width, 0);
-  return col;
-}
-
-function buildSmallWidget(w, cfg, title, ds, fromCache, cookieDead) {
-  w.addSpacer(2);
-  addHeaderRow(w, title, ds, fromCache, cookieDead);
-  w.addSpacer(10);
+function buildSmallWidget(w, cfg, ds, fromCache, cookieDead) {
+  w.setPadding(12, 14, 10, 14);
+  addHeaderRow(w, ds, fromCache, cookieDead);
+  w.addSpacer(8);
+  const showUsed = !!cfg.showUsedFlow;
   const four = sShowDirect(cfg, ds);
-  const cards = [
-    [FEE_ICON, FEE_ICON_COLOR, ds.fee],
-    [GENERAL_ICON, GENERAL_ICON_COLOR, ds.generalFlow],
-  ];
-  if (four) cards.push([DIRECT_ICON, DIRECT_ICON_COLOR, ds.directFlow]);
-  cards.push([VOICE_ICON, VOICE_ICON_COLOR, ds.voice]);
-  // 小组件：两两一行；3 卡时话费独占一行
-  const rows = [];
-  if (cards.length === 3) rows.push([cards[0]], [cards[1], cards[2]]);
-  else rows.push([cards[0], cards[1]], [cards[2], cards[3]]);
-  for (const r of rows) {
-    const row = w.addStack();
-    row.layoutHorizontally();
-    if (r.length === 1) {
-      row.addSpacer();
-      addCard(cardColumn(row, 70), r[0][0], r[0][1], r[0][2].title, r[0][2].number, r[0][2].unit, 14);
-      row.addSpacer();
-    } else {
-      row.addSpacer();
-      addCard(cardColumn(row, 70), r[0][0], r[0][1], r[0][2].title, r[0][2].number, r[0][2].unit, 14);
-      row.addSpacer();
-      addCard(cardColumn(row, 70), r[1][0], r[1][1], r[1][2].title, r[1][2].number, r[1][2].unit, 14);
-      row.addSpacer();
-    }
-    w.addSpacer(8);
+  const ft = w.addText('话费余额');
+  ft.font = Font.systemFont(11);
+  ft.textColor = new Color(UI.gray);
+  ft.centerAlignText();
+  const fv = w.addText(`¥${ds.fee.number}`);
+  fv.font = Font.boldSystemFont(26);
+  fv.textColor = new Color(UI.white);
+  fv.centerAlignText();
+  fv.lineLimit = 1;
+  fv.minimumScaleFactor = 0.7;
+  w.addSpacer(8);
+  miniStatRow(w, '📶', ds.generalFlow, showUsed, UI.blue);
+  w.addSpacer(4);
+  if (four) {
+    miniStatRow(w, '⚡', ds.directFlow, showUsed, UI.purple);
+    w.addSpacer(4);
   }
+  miniStatRow(w, '📞', ds.voice, showUsed, UI.green);
   w.addSpacer();
 }
 
-function buildMediumWidget(w, cfg, title, ds, fromCache, cookieDead) {
-  w.addSpacer(2);
-  addHeaderRow(w, title, ds, fromCache, cookieDead);
-  w.addSpacer(12);
-  const four = sShowDirect(cfg, ds);
-  const cards = [
-    [FEE_ICON, FEE_ICON_COLOR, ds.fee],
-    [GENERAL_ICON, GENERAL_ICON_COLOR, ds.generalFlow],
-  ];
-  if (four) cards.push([DIRECT_ICON, DIRECT_ICON_COLOR, ds.directFlow]);
-  cards.push([VOICE_ICON, VOICE_ICON_COLOR, ds.voice]);
+function miniStatRow(w, emoji, flow, showUsed, pctColor) {
   const row = w.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  const numSize = four ? 15 : 19;
+  const ic = row.addText(emoji);
+  ic.font = Font.systemFont(11);
+  row.addSpacer(4);
+  const tt = row.addText(flow.title);
+  tt.font = Font.systemFont(11);
+  tt.textColor = new Color(UI.gray);
+  tt.lineLimit = 1;
   row.addSpacer();
-  for (const c of cards) {
-    addCard(cardColumn(row, four ? 72 : 88), c[0], c[1], c[2].title, c[2].number, c[2].unit, numSize);
-    row.addSpacer();
+  const nn = row.addText(`${flow.number} ${flow.unit}`);
+  nn.font = Font.boldSystemFont(13);
+  nn.textColor = new Color(UI.white);
+  nn.lineLimit = 1;
+  const pp = row.addText(` ${pctText(flow, showUsed)}`);
+  pp.font = Font.boldSystemFont(12);
+  pp.textColor = new Color(pctColor);
+  pp.lineLimit = 1;
+}
+
+function buildMediumWidget(w, cfg, ds, fromCache, cookieDead) {
+  w.setPadding(12, 14, 12, 14);
+  addHeaderRow(w, ds, fromCache, cookieDead);
+  w.addSpacer(8);
+  const showUsed = !!cfg.showUsedFlow;
+  const four = sShowDirect(cfg, ds);
+
+  const body = w.addStack();
+  body.layoutHorizontally();
+  body.centerAlignContent();
+
+  // 左栏：双圆环 + 话费余额
+  const left = body.addStack();
+  left.layoutVertically();
+  left.centerAlignContent();
+  left.size = new Size(112, 0);
+  const ring = left.addImage(drawRings(86, pctFrac(ds.generalFlow, showUsed), four ? pctFrac(ds.directFlow, showUsed) : 0));
+  ring.imageSize = new Size(86, 86);
+  ring.centerAlignImage();
+  left.addSpacer(5);
+  const ft = left.addText('话费余额');
+  ft.font = Font.systemFont(10);
+  ft.textColor = new Color(UI.gray);
+  ft.centerAlignText();
+  const fv = left.addText(`¥${ds.fee.number}`);
+  fv.font = Font.boldSystemFont(21);
+  fv.textColor = new Color(UI.white);
+  fv.centerAlignText();
+  fv.lineLimit = 1;
+  fv.minimumScaleFactor = 0.7;
+
+  body.addSpacer(10);
+
+  // 右栏：深灰圆角卡片
+  const card = body.addStack();
+  card.layoutVertically();
+  card.backgroundColor = new Color(UI.card);
+  card.cornerRadius = 12;
+  card.setPadding(10, 12, 10, 12);
+  card.centerAlignContent();
+  card.size = new Size(179, 0);
+  addStatRow(card, '📶', ds.generalFlow, showUsed, UI.blue);
+  card.addSpacer(7);
+  if (four) {
+    addStatRow(card, '⚡', ds.directFlow, showUsed, UI.purple);
+    card.addSpacer(7);
   }
+  addStatRow(card, '📞', ds.voice, showUsed, UI.green);
+
   w.addSpacer();
 }
 
-function buildErrorWidget(w, title, message) {
-  w.addSpacer(2);
-  addHeaderRow(w, title, null, false, false);
+function buildErrorWidget(w, message) {
+  w.setPadding(12, 14, 12, 14);
+  addHeaderRow(w, null, false, false);
   w.addSpacer(10);
   const img = w.addImage(SFSymbol.named('exclamationmark.triangle').image);
   img.tintColor = new Color('#FF9500');
@@ -1203,7 +1307,7 @@ function buildErrorWidget(w, title, message) {
   w.addSpacer(6);
   const t = w.addText(message);
   t.font = Font.systemFont(11);
-  t.textOpacity = 0.7;
+  t.textColor = new Color(UI.gray);
   t.centerAlignText();
   t.lineLimit = 5;
   w.addSpacer();
@@ -1214,29 +1318,30 @@ function buildErrorWidget(w, title, message) {
 async function main() {
   let cfg = loadCfg();
   cfg = await ensureCfgInteractive(cfg);
-  const title = '中国电信';
   const ctx = makeCtx(cfg);
   const w = new ListWidget();
-  // 透明背景：第 6 段参数为 1 时启用
+  // 深色卡片底；第 6 段参数为 1 时透明背景
   if (cfg.transparent) {
     w.backgroundColor = new Color('#000000', 0);
+  } else {
+    w.backgroundColor = new Color(UI.bg);
   }
   try {
     const { configured, ds, fromCache, cookieDead } = await loadData(ctx);
     if (!configured) {
-      buildErrorWidget(w, title, '未配置账号\n在小组件「参数」中填写\n手机号|服务密码|AndroidID|是否显示已用|是否显示定向|透明背景(1)');
+      buildErrorWidget(w, '未配置账号\n在小组件「参数」中填写\n手机号|服务密码|AndroidID|是否显示已用|是否显示定向|透明背景(1)');
       w.url = 'https://e.dlife.cn/index.do';
     } else if (!ds) {
-      buildErrorWidget(w, title, cookieDead ? '登录已失效\n请检查账号参数' : '数据获取失败\n请检查网络后重试');
+      buildErrorWidget(w, cookieDead ? '登录已失效\n请检查账号参数' : '数据获取失败\n请检查网络后重试');
       w.url = 'https://e.dlife.cn/index.do';
     } else {
       const family = config.widgetFamily || 'medium';
-      if (family === 'small') buildSmallWidget(w, cfg, title, ds, fromCache, cookieDead);
-      else buildMediumWidget(w, cfg, title, ds, fromCache, cookieDead);
+      if (family === 'small') buildSmallWidget(w, cfg, ds, fromCache, cookieDead);
+      else buildMediumWidget(w, cfg, ds, fromCache, cookieDead);
       if (cookieDead) w.url = 'https://e.dlife.cn/index.do';
     }
   } catch (e) {
-    buildErrorWidget(w, title, '脚本异常\n' + String((e && e.message) || e).slice(0, 80));
+    buildErrorWidget(w, '脚本异常\n' + String((e && e.message) || e).slice(0, 80));
   }
   // 建议 6 小时刷新一次（实际由 iOS 调度）
   w.refreshAfterDate = new Date(Date.now() + 6 * 60 * 60 * 1000);
