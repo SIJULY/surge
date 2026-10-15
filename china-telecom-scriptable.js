@@ -1004,9 +1004,28 @@ async function ensureCfgInteractive(cfg) {
   a.addSecureTextField('服务密码', cfg.password || '');
   a.addTextField('AndroidID（16 位）', cfg.androidId || '');
   a.addTextField('透明背景（填 1 启用）', cfg.transparent ? '1' : '');
+  a.addAction('选择壁纸图');
   a.addAction('保存');
   a.addCancelAction('取消');
-  if ((await a.present()) === 0) {
+  const choice = await a.present();
+  if (choice === 1) {
+    // 选择壁纸图
+    try {
+      const img = await Photos.fromLibrary();
+      const fm = FileManager.local();
+      const path = fm.joinPath(fm.documentsDirectory(), 'ct_widget_bg.jpg');
+      fm.writeImage(path, img);
+      cfg.transparent = true;
+      try { Keychain.set(CTK.cfg, JSON.stringify(cfg)); } catch (e) {}
+      const ok = new Alert();
+      ok.title = '已保存壁纸图';
+      ok.message = '下次小组件刷新时会使用该图做背景';
+      ok.addAction('好');
+      await ok.present();
+    } catch (e) {}
+    return cfg;
+  }
+  if (choice === 0) {
     const phone = (a.textFieldValue(0) || '').trim();
     const password = a.textFieldValue(1) || '';
     const androidId = (a.textFieldValue(2) || '').trim().toLowerCase();
@@ -1282,9 +1301,22 @@ async function main() {
   const ctx = makeCtx(cfg);
   const w = new ListWidget();
   // 自适应深浅色；第 6 段参数为 1 时强制透明背景
-  w.backgroundColor = cfg.transparent
-    ? Color.dynamic(new Color('#E2E2E7', 0.35), new Color('#2C2C2F', 0.65))
-    : UI.bg;
+  // 透明背景：优先用用户选择的壁纸图，没有则用毛玻璃半透明
+  if (cfg.transparent) {
+    try {
+      const fm = FileManager.local();
+      const bgPath = fm.joinPath(fm.documentsDirectory(), 'ct_widget_bg.jpg');
+      if (fm.fileExists(bgPath)) {
+        w.backgroundImage = fm.readImage(bgPath);
+      } else {
+        w.backgroundColor = Color.dynamic(new Color('#E2E2E7', 0.35), new Color('#2C2C2F', 0.65));
+      }
+    } catch (e) {
+      w.backgroundColor = Color.dynamic(new Color('#E2E2E7', 0.35), new Color('#2C2C2F', 0.65));
+    }
+  } else {
+    w.backgroundColor = UI.bg;
+  }
   try {
     const { configured, ds, fromCache, cookieDead, appErr } = await loadData(ctx);
     if (!configured) {
